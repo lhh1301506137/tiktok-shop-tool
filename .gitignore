@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Release zips (build artifacts)
+release/*.zip
+
+# Landing page build artifacts (keep compiled CSS)
+landing/input.css
+landing/tailwind.config.js

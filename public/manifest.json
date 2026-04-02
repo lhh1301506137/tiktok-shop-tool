@@ -1,0 +1,104 @@
+{
+  "manifest_version": 3,
+  "name": "ShopPilot - TikTok Shop Seller Tool",
+  "version": "0.3.0",
+  "description": "AI-powered creator outreach, competitor monitoring, and listing optimization for TikTok Shop sellers.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "sidePanel",
+    "tabs",
+    "alarms",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://seller-us.tiktok.com/*",
+    "https://seller-uk.tiktok.com/*",
+    "https://seller-sg.tiktok.com/*",
+    "https://seller-id.tiktok.com/*",
+    "https://seller-th.tiktok.com/*",
+    "https://seller-my.tiktok.com/*",
+    "https://seller-vn.tiktok.com/*",
+    "https://seller-ph.tiktok.com/*",
+    "https://affiliate.tiktokshop.com/*",
+    "https://www.tiktok.com/view/product/*",
+    "https://api.minimax.chat/*",
+    "https://api.openai.com/*",
+    "https://api.deepseek.com/*"
+  ],
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "src/sidepanel/index.html"
+  },
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://seller-us.tiktok.com/*",
+        "https://seller-uk.tiktok.com/*",
+        "https://seller-sg.tiktok.com/*",
+        "https://seller-id.tiktok.com/*",
+        "https://seller-th.tiktok.com/*",
+        "https://seller-my.tiktok.com/*",
+        "https://seller-vn.tiktok.com/*",
+        "https://seller-ph.tiktok.com/*",
+        "https://affiliate.tiktokshop.com/*",
+        "https://www.tiktok.com/view/product/*"
+      ],
+      "js": ["content/index.js"],
+      "css": ["content/styles.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://seller-us.tiktok.com/*",
+        "https://seller-uk.tiktok.com/*",
+        "https://seller-sg.tiktok.com/*",
+        "https://seller-id.tiktok.com/*",
+        "https://seller-th.tiktok.com/*",
+        "https://seller-my.tiktok.com/*",
+        "https://seller-vn.tiktok.com/*",
+        "https://seller-ph.tiktok.com/*",
+        "https://affiliate.tiktokshop.com/*",
+        "https://www.tiktok.com/view/product/*"
+      ],
+      "js": ["content/injected.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": [
+        "https://seller-us.tiktok.com/*",
+        "https://seller-uk.tiktok.com/*",
+        "https://seller-sg.tiktok.com/*",
+        "https://seller-id.tiktok.com/*",
+        "https://seller-th.tiktok.com/*",
+        "https://seller-my.tiktok.com/*",
+        "https://seller-vn.tiktok.com/*",
+        "https://seller-ph.tiktok.com/*",
+        "https://affiliate.tiktokshop.com/*",
+        "https://www.tiktok.com/view/product/*"
+      ]
+    }
+  ]
+}

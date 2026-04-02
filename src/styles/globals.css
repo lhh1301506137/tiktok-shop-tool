@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-primary text-white px-4 py-2 rounded-lg font-medium
+           hover:bg-red-600 active:bg-red-700 transition-colors
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-tiktok-gray-100 text-tiktok-gray-800 px-4 py-2 rounded-lg font-medium
+           hover:bg-tiktok-gray-200 active:bg-tiktok-gray-300 transition-colors;
+  }
+
+  .btn-outline {
+    @apply border border-tiktok-gray-300 text-tiktok-gray-700 px-4 py-2 rounded-lg font-medium
+           hover:bg-tiktok-gray-50 active:bg-tiktok-gray-100 transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-tiktok-gray-200 p-4 shadow-sm;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-tiktok-gray-300 rounded-lg text-sm
+           focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary
+           placeholder:text-tiktok-gray-400 transition-colors;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-700;
+  }
+
+  .badge-error {
+    @apply badge bg-red-100 text-red-700;
+  }
+}

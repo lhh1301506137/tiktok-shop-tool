@@ -34,15 +34,36 @@ export function FeedbackWidget({ onClose }: { onClose?: () => void }) {
       message: message.trim(),
       rating: rating > 0 ? rating : undefined,
       createdAt: Date.now(),
-      version: '0.2.0',
+      version: '0.3.0',
     };
 
     try {
+      // 1) Always save locally
       const result = await chrome.storage.local.get('feedback');
       const existing: FeedbackEntry[] = result.feedback || [];
       existing.unshift(entry);
-      // Keep latest 50
       await chrome.storage.local.set({ feedback: existing.slice(0, 50) });
+
+      // 2) Submit to Formspree if configured (fire-and-forget)
+      const settings = await chrome.storage.local.get('settings');
+      const formspreeId = settings?.settings?.formspreeId;
+      if (formspreeId) {
+        fetch(`https://formspree.io/f/${formspreeId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            type: entry.type,
+            message: entry.message,
+            rating: entry.rating,
+            version: entry.version,
+            timestamp: new Date(entry.createdAt).toISOString(),
+          }),
+        }).catch(() => {
+          // Silent fail — local copy is the source of truth
+          console.log('[ShopPilot] Formspree submission failed (offline?), feedback saved locally');
+        });
+      }
+
       setSubmitted(true);
     } catch (e) {
       console.error('[ShopPilot] Feedback save error:', e);

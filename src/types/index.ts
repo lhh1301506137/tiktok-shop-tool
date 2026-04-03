@@ -141,6 +141,8 @@ export interface UserSettings {
   defaultTone: InviteMessage['tone'];
   language: 'en' | 'zh';
   theme: 'light' | 'dark' | 'system';
+  // Integration
+  formspreeId?: string;   // Formspree form ID for online feedback submission
   // Tracking
   lastSyncAt?: number;
 }

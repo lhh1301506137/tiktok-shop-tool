@@ -144,6 +144,26 @@ export function SettingsTab({
           <option value="friendly">Friendly</option>
         </select>
       </div>
+
+      <hr className="border-tiktok-gray-100" />
+
+      {/* Formspree Integration */}
+      <div>
+        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
+          Formspree ID <span className="text-tiktok-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={settings?.formspreeId || ''}
+          onChange={e => onUpdateSetting({ formspreeId: e.target.value.trim() || undefined })}
+          placeholder="e.g. xyzabcde"
+          className="input-field text-sm"
+        />
+        <p className="text-xs text-tiktok-gray-400 mt-1">
+          Enable online feedback submission. Get a free form at{' '}
+          <a href="https://formspree.io" target="_blank" rel="noopener" className="underline">formspree.io</a>
+        </p>
+      </div>
     </div>
   );
 }

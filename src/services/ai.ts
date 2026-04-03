@@ -7,6 +7,43 @@ interface AIResponse {
   error?: string;
 }
 
+const AI_TIMEOUT_MS = 30_000;
+const MAX_RETRIES = 1;
+const RETRY_DELAY_MS = 2_000;
+
+/** Mask API key for safe logging: show first 4 + last 4 chars only */
+function maskKey(key: string): string {
+  if (key.length <= 10) return '****';
+  return `${key.slice(0, 4)}...${key.slice(-4)}`;
+}
+
+/** Classify HTTP status into user-friendly error */
+function classifyHttpError(status: number, data: any): string {
+  const apiMsg = data?.error?.message || data?.base_resp?.status_msg || '';
+
+  switch (status) {
+    case 401:
+      return 'Invalid API key. Please check your key in Settings.';
+    case 403:
+      return 'Access denied. Your API key may lack required permissions.';
+    case 402:
+      return 'API quota exceeded. Check your billing at the AI provider dashboard.';
+    case 429:
+      return 'Rate limit exceeded. Please wait a moment and try again.';
+    case 500:
+    case 502:
+    case 503:
+      return `AI provider is temporarily unavailable (${status}). Retrying...`;
+    default:
+      return apiMsg || `API error: HTTP ${status}`;
+  }
+}
+
+/** Check if an error is retryable */
+function isRetryable(status: number): boolean {
+  return status === 429 || status === 500 || status === 502 || status === 503;
+}
+
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
@@ -27,53 +64,88 @@ async function callAI(
     return { success: false, error: 'API URL not configured. Set a custom API URL in Settings.' };
   }
 
-  try {
-    // All supported providers use OpenAI-compatible format
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${settings.apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 4096,
-      }),
-    });
+  const requestBody = JSON.stringify({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 4096,
+  });
 
-    let data: any;
+  let lastError = '';
+
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    // Wait before retry (skip on first attempt)
+    if (attempt > 0) {
+      const delay = RETRY_DELAY_MS * Math.pow(2, attempt - 1); // exponential backoff
+      console.log(`[ShopPilot] Retry ${attempt}/${MAX_RETRIES} after ${delay}ms...`);
+      await new Promise(r => setTimeout(r, delay));
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
     try {
-      data = await response.json();
-    } catch {
-      return { success: false, error: `API returned non-JSON response (HTTP ${response.status})` };
-    }
-    console.log('[ShopPilot] API response:', JSON.stringify(data).substring(0, 500));
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.apiKey}`,
+        },
+        body: requestBody,
+        signal: controller.signal,
+      });
 
-    // Check for MiniMax-style error (base_resp with non-zero status_code)
-    if (data.base_resp && data.base_resp.status_code !== 0) {
-      return { success: false, error: `API error: ${data.base_resp.status_msg || 'Unknown error'} (code ${data.base_resp.status_code})` };
-    }
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorMsg = data.error?.message || data.base_resp?.status_msg || `API error: ${response.status}`;
-      return { success: false, error: errorMsg };
-    }
+      let data: any;
+      try {
+        data = await response.json();
+      } catch {
+        lastError = `API returned non-JSON response (HTTP ${response.status})`;
+        if (isRetryable(response.status)) continue;
+        return { success: false, error: lastError };
+      }
 
-    const msg = data.choices?.[0]?.message;
-    // MiniMax reasoning models put output in reasoning_content when content is empty
-    const content = msg?.content || msg?.reasoning_content || '';
-    if (!content) {
-      return { success: false, error: `AI returned empty content. Check your API key and model settings.` };
+      console.log(`[ShopPilot] AI response (key: ${maskKey(settings.apiKey)}):`, JSON.stringify(data).substring(0, 500));
+
+      // Check for MiniMax-style error (base_resp with non-zero status_code)
+      if (data.base_resp && data.base_resp.status_code !== 0) {
+        lastError = `API error: ${data.base_resp.status_msg || 'Unknown error'} (code ${data.base_resp.status_code})`;
+        return { success: false, error: lastError };
+      }
+
+      if (!response.ok) {
+        lastError = classifyHttpError(response.status, data);
+        if (isRetryable(response.status) && attempt < MAX_RETRIES) continue;
+        return { success: false, error: lastError };
+      }
+
+      const msg = data.choices?.[0]?.message;
+      // MiniMax reasoning models put output in reasoning_content when content is empty
+      const content = msg?.content || msg?.reasoning_content || '';
+      if (!content) {
+        return { success: false, error: 'AI returned empty content. Check your API key and model settings.' };
+      }
+      return { success: true, content };
+    } catch (err) {
+      clearTimeout(timeoutId);
+
+      if ((err as Error).name === 'AbortError') {
+        lastError = `Request timed out after ${AI_TIMEOUT_MS / 1000}s. The AI provider may be slow — try again or switch models.`;
+        if (attempt < MAX_RETRIES) continue;
+        return { success: false, error: lastError };
+      }
+
+      lastError = `Network error: ${(err as Error).message}`;
+      if (attempt < MAX_RETRIES) continue;
+      return { success: false, error: lastError };
     }
-    return { success: true, content };
-  } catch (err) {
-    return { success: false, error: `Network error: ${(err as Error).message}` };
   }
+
+  return { success: false, error: lastError || 'Failed after retries' };
 }
 
 // ---- Generate Creator Invitation ----
@@ -155,7 +227,7 @@ Output in JSON format:
 
   try {
     const raw = result.content!;
-    console.log('[ShopPilot] AI raw response:', raw);
+    console.log('[ShopPilot] AI raw response:', raw.substring(0, 300));
 
     // Strategy 1: Extract JSON from markdown code blocks
     const codeBlockMatch = raw.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
@@ -172,8 +244,8 @@ Output in JSON format:
     // Strategy 3: Try parsing the whole response as JSON
     return JSON.parse(raw.trim());
   } catch (e) {
-    console.error('[ShopPilot] Parse error:', e, '\nRaw content:', result.content);
-    return { error: `Failed to parse AI response. Raw: ${result.content?.substring(0, 200)}` };
+    console.error('[ShopPilot] Parse error:', e);
+    return { error: `Failed to parse AI response. The model may have returned invalid JSON. Try again or switch models.` };
   }
 }
 

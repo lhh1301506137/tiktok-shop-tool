@@ -81,7 +81,15 @@ export interface AIHistoryEntry {
 }
 
 /** Supported AI providers */
-export type AIProvider = 'openai' | 'minimax' | 'deepseek' | 'custom';
+export type AIProvider =
+  | 'openai'
+  | 'claude'
+  | 'gemini'
+  | 'deepseek'
+  | 'glm'
+  | 'kimi'
+  | 'minimax'
+  | 'custom';
 
 /** AI provider configuration */
 export const AI_PROVIDERS: Record<AIProvider, {
@@ -90,6 +98,8 @@ export const AI_PROVIDERS: Record<AIProvider, {
   defaultModel: string;
   models: string[];
   keyPrefix: string;  // expected key prefix for validation hint
+  keyUrl: string;     // URL to get API key
+  authStyle: 'bearer' | 'x-api-key';  // authentication header style
 }> = {
   openai: {
     name: 'OpenAI',
@@ -97,13 +107,26 @@ export const AI_PROVIDERS: Record<AIProvider, {
     defaultModel: 'gpt-4o-mini',
     models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini', 'gpt-4.1-nano'],
     keyPrefix: 'sk-',
+    keyUrl: 'https://platform.openai.com/api-keys',
+    authStyle: 'bearer',
   },
-  minimax: {
-    name: 'MiniMax',
-    apiUrl: 'https://api.minimax.chat/v1/text/chatcompletion_v2',
-    defaultModel: 'MiniMax-M2.7',
-    models: ['MiniMax-M2.7', 'MiniMax-M2.5'],
+  claude: {
+    name: 'Claude (Anthropic)',
+    apiUrl: 'https://api.anthropic.com/v1/messages',
+    defaultModel: 'claude-sonnet-4-20250514',
+    models: ['claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022'],
+    keyPrefix: 'sk-ant-',
+    keyUrl: 'https://console.anthropic.com/settings/keys',
+    authStyle: 'x-api-key',
+  },
+  gemini: {
+    name: 'Gemini (Google)',
+    apiUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    defaultModel: 'gemini-2.5-flash',
+    models: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'],
     keyPrefix: '',
+    keyUrl: 'https://aistudio.google.com/apikey',
+    authStyle: 'bearer',
   },
   deepseek: {
     name: 'DeepSeek',
@@ -111,6 +134,35 @@ export const AI_PROVIDERS: Record<AIProvider, {
     defaultModel: 'deepseek-chat',
     models: ['deepseek-chat', 'deepseek-reasoner'],
     keyPrefix: 'sk-',
+    keyUrl: 'https://platform.deepseek.com/api_keys',
+    authStyle: 'bearer',
+  },
+  glm: {
+    name: 'GLM (智谱)',
+    apiUrl: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+    defaultModel: 'glm-4-flash',
+    models: ['glm-4-flash', 'glm-4-plus', 'glm-4-long'],
+    keyPrefix: '',
+    keyUrl: 'https://open.bigmodel.cn/usercenter/apikeys',
+    authStyle: 'bearer',
+  },
+  kimi: {
+    name: 'Kimi (月之暗面)',
+    apiUrl: 'https://api.moonshot.cn/v1/chat/completions',
+    defaultModel: 'moonshot-v1-8k',
+    models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
+    keyPrefix: 'sk-',
+    keyUrl: 'https://platform.moonshot.cn/console/api-keys',
+    authStyle: 'bearer',
+  },
+  minimax: {
+    name: 'MiniMax',
+    apiUrl: 'https://api.minimax.chat/v1/text/chatcompletion_v2',
+    defaultModel: 'MiniMax-M2.7',
+    models: ['MiniMax-M2.7', 'MiniMax-M2.5'],
+    keyPrefix: '',
+    keyUrl: 'https://platform.minimaxi.com/user-center/basic-information/interface-key',
+    authStyle: 'bearer',
   },
   custom: {
     name: 'Custom (OpenAI-compatible)',
@@ -118,6 +170,8 @@ export const AI_PROVIDERS: Record<AIProvider, {
     defaultModel: '',
     models: [],
     keyPrefix: '',
+    keyUrl: '',
+    authStyle: 'bearer',
   },
 };
 

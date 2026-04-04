@@ -33,13 +33,16 @@ export function SettingsTab({
             🧪 Trial Mode: {TRIAL_AI_LIMIT - trialUsed}/{TRIAL_AI_LIMIT} free AI calls left
           </p>
           <p className="text-blue-700 text-[11px] mb-2">
-            Set up your own key for unlimited AI calls. We recommend <strong>DeepSeek</strong> — cheapest and fastest:
+            Set up your own key for unlimited AI calls. Pick any provider below:
           </p>
-          <ol className="text-[11px] text-blue-700 space-y-1 ml-4 list-decimal">
-            <li>Go to <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" className="underline font-medium">platform.deepseek.com</a></li>
-            <li>Sign up (free) → Click "Create API Key"</li>
-            <li>Copy the key → Select "DeepSeek" below → Paste → Save</li>
-          </ol>
+          <div className="text-[11px] text-blue-700 space-y-0.5">
+            <p>💰 <strong>Budget</strong>: <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" className="underline">DeepSeek</a> · <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" rel="noopener" className="underline">GLM 智谱</a></p>
+            <p>🌏 <strong>国内</strong>: <a href="https://platform.moonshot.cn/console/api-keys" target="_blank" rel="noopener" className="underline">Kimi</a> · <a href="https://platform.minimaxi.com/user-center/basic-information/interface-key" target="_blank" rel="noopener" className="underline">MiniMax</a></p>
+            <p>🌐 <strong>Global</strong>: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" className="underline">OpenAI</a> · <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" className="underline">Claude</a> · <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="underline">Gemini</a></p>
+          </div>
+          <p className="text-[10px] text-blue-600 mt-1.5">
+            Select a provider below → Paste your API key → Save
+          </p>
         </div>
       )}
 
@@ -126,6 +129,11 @@ export function SettingsTab({
           <p className="text-green-700 text-xs">
             ✅ {providerConfig.name} key configured &middot; Model: {settings?.aiModel || providerConfig.defaultModel}
           </p>
+          {providerConfig.keyUrl && (
+            <p className="text-green-600 text-[10px] mt-1">
+              Manage keys: <a href={providerConfig.keyUrl} target="_blank" rel="noopener" className="underline">{providerConfig.name} Dashboard</a>
+            </p>
+          )}
         </div>
       )}
 

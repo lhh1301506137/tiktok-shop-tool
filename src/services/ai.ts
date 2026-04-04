@@ -72,6 +72,7 @@ async function callAI(
   }
 
   const provider = AI_PROVIDERS[settings.aiProvider] || AI_PROVIDERS.openai;
+  const isClaudeProvider = !useTrialMode && settings.aiProvider === 'claude';
   const apiUrl = useTrialMode
     ? TRIAL_API_URL
     : (settings.aiProvider === 'custom' ? (settings.customApiUrl || '') : provider.apiUrl);
@@ -84,15 +85,35 @@ async function callAI(
     return { success: false, error: 'API URL not configured. Set a custom API URL in Settings.' };
   }
 
-  const requestBody = JSON.stringify({
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    temperature: 0.7,
-    max_tokens: 4096,
-  });
+  // Build request headers — Claude uses x-api-key, others use Bearer token
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (isClaudeProvider) {
+    headers['x-api-key'] = apiKey;
+    headers['anthropic-version'] = '2023-06-01';
+  } else {
+    headers['Authorization'] = `Bearer ${apiKey}`;
+  }
+
+  // Build request body — Claude has a different format
+  const requestBody = isClaudeProvider
+    ? JSON.stringify({
+        model,
+        system: systemPrompt,
+        messages: [
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+      })
+    : JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+      });
 
   let lastError = '';
 
@@ -110,10 +131,7 @@ async function callAI(
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
+        headers,
         body: requestBody,
         signal: controller.signal,
       });
@@ -143,9 +161,18 @@ async function callAI(
         return { success: false, error: lastError };
       }
 
-      const msg = data.choices?.[0]?.message;
-      // MiniMax reasoning models put output in reasoning_content when content is empty
-      const content = msg?.content || msg?.reasoning_content || '';
+      // Extract content — Claude returns data.content[0].text, others return data.choices[0].message.content
+      let content = '';
+      if (isClaudeProvider) {
+        // Claude Messages API response format
+        const textBlock = data.content?.find((b: any) => b.type === 'text');
+        content = textBlock?.text || '';
+      } else {
+        const msg = data.choices?.[0]?.message;
+        // MiniMax reasoning models put output in reasoning_content when content is empty
+        content = msg?.content || msg?.reasoning_content || '';
+      }
+
       if (!content) {
         return { success: false, error: 'AI returned empty content. Check your API key and model settings.' };
       }

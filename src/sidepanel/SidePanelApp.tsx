@@ -19,6 +19,45 @@ export function SidePanelApp() {
   const [currentTone, setCurrentTone] = useState<Tone>('professional');
   const { showToast, ToastElement } = useToast();
 
+  // Check for recovered/running batch on mount
+  useEffect(() => {
+    chrome.runtime.sendMessage({ type: 'GET_INVITE_QUEUE' }).then(state => {
+      if (state?.isRunning) {
+        setBatchProgress({
+          isRunning: true,
+          total: state.stats.total,
+          completed: state.stats.completed,
+          succeeded: state.stats.succeeded,
+          failed: state.stats.failed,
+          recovered: state.recovered,
+        });
+        // Start polling
+        if (!pollIntervalRef.current) {
+          pollIntervalRef.current = setInterval(async () => {
+            try {
+              const s = await chrome.runtime.sendMessage({ type: 'GET_INVITE_QUEUE' });
+              if (!s) return;
+              setBatchProgress({
+                isRunning: s.isRunning,
+                total: s.stats.total,
+                completed: s.stats.completed,
+                succeeded: s.stats.succeeded,
+                failed: s.stats.failed,
+                recovered: s.recovered,
+              });
+              if (!s.isRunning) {
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                showToast(`Batch complete: ${s.stats.succeeded} sent, ${s.stats.failed} failed`, s.stats.failed > 0 ? 'info' : 'success');
+                setTimeout(() => setBatchProgress(null), 5000);
+              }
+            } catch {}
+          }, 1000);
+        }
+      }
+    }).catch(() => {});
+  }, []);
+
   useEffect(() => {
     loadCreators();
     const handler = (msg: any) => {
@@ -78,6 +117,7 @@ export function SidePanelApp() {
     completed: number;
     succeeded: number;
     failed: number;
+    recovered?: boolean;
   } | null>(null);
   const pollIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -127,6 +167,7 @@ export function SidePanelApp() {
           completed: state.stats.completed,
           succeeded: state.stats.succeeded,
           failed: state.stats.failed,
+          recovered: state.recovered,
         });
 
         if (!state.isRunning) {
@@ -175,6 +216,9 @@ export function SidePanelApp() {
               <span className="text-xs font-semibold text-tiktok-gray-900">
                 {batchProgress.isRunning ? 'Batch Invite Running...' : 'Batch Complete'}
               </span>
+              {(batchProgress as any).recovered && (
+                <span className="text-[10px] text-blue-600 font-medium ml-1">(resumed)</span>
+              )}
             </div>
             {batchProgress.isRunning && (
               <button

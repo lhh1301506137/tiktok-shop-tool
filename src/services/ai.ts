@@ -1,5 +1,5 @@
-import { Creator, InviteMessage, AI_PROVIDERS } from '@/types';
-import { getSettings } from '@/utils/storage';
+import { Creator, InviteMessage, AI_PROVIDERS, TRIAL_AI_LIMIT } from '@/types';
+import { getSettings, getTrialStatus, incrementTrialUsage } from '@/utils/storage';
 
 interface AIResponse {
   success: boolean;
@@ -44,21 +44,41 @@ function isRetryable(status: number): boolean {
   return status === 429 || status === 500 || status === 502 || status === 503;
 }
 
+// Built-in trial key (DeepSeek — cost ~¥0.01/call, obfuscated at build time)
+const _TK = ['sk-', '0f9a2b', '3c4d5e', '6f7890'].join('');
+const TRIAL_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const TRIAL_MODEL = 'deepseek-chat';
+
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
 ): Promise<AIResponse> {
   const settings = await getSettings();
 
+  // Determine if we're in trial mode
+  let useTrialMode = false;
   if (!settings.apiKey) {
-    return { success: false, error: 'API Key not configured. Go to Settings to add your key.' };
+    const trialStatus = await getTrialStatus();
+    if (trialStatus.available) {
+      useTrialMode = true;
+    } else {
+      return {
+        success: false,
+        error: trialStatus.used >= trialStatus.limit
+          ? `You've used all ${TRIAL_AI_LIMIT} free trial AI calls. Add your own API key in Settings to continue — it takes 60 seconds!`
+          : 'API Key not configured. Go to Settings to add your key.',
+      };
+    }
   }
 
   const provider = AI_PROVIDERS[settings.aiProvider] || AI_PROVIDERS.openai;
-  const apiUrl = settings.aiProvider === 'custom'
-    ? (settings.customApiUrl || '')
-    : provider.apiUrl;
-  const model = settings.aiModel || provider.defaultModel;
+  const apiUrl = useTrialMode
+    ? TRIAL_API_URL
+    : (settings.aiProvider === 'custom' ? (settings.customApiUrl || '') : provider.apiUrl);
+  const model = useTrialMode
+    ? TRIAL_MODEL
+    : (settings.aiModel || provider.defaultModel);
+  const apiKey = useTrialMode ? _TK : settings.apiKey!;
 
   if (!apiUrl) {
     return { success: false, error: 'API URL not configured. Set a custom API URL in Settings.' };
@@ -92,7 +112,7 @@ async function callAI(
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${settings.apiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: requestBody,
         signal: controller.signal,
@@ -109,7 +129,7 @@ async function callAI(
         return { success: false, error: lastError };
       }
 
-      console.log(`[ShopPilot] AI response (key: ${maskKey(settings.apiKey)}):`, JSON.stringify(data).substring(0, 500));
+      console.log(`[ShopPilot] AI response (${useTrialMode ? 'TRIAL' : 'key: ' + maskKey(apiKey)}):`, JSON.stringify(data).substring(0, 500));
 
       // Check for MiniMax-style error (base_resp with non-zero status_code)
       if (data.base_resp && data.base_resp.status_code !== 0) {
@@ -128,6 +148,10 @@ async function callAI(
       const content = msg?.content || msg?.reasoning_content || '';
       if (!content) {
         return { success: false, error: 'AI returned empty content. Check your API key and model settings.' };
+      }
+      // Track trial usage on success
+      if (useTrialMode) {
+        await incrementTrialUsage();
       }
       return { success: true, content };
     } catch (err) {
@@ -153,7 +177,8 @@ async function callAI(
 export async function generateInviteMessage(
   creator: Creator,
   tone: 'professional' | 'casual' | 'friendly' = 'professional',
-  productInfo?: string
+  productInfo?: string,
+  sellerProduct?: { name?: string; description?: string; commission?: number },
 ): Promise<InviteMessage | { error: string }> {
   const systemPrompt = `You are an expert TikTok Shop seller writing personalized collaboration invitations to content creators. 
 
@@ -175,7 +200,7 @@ Followers: ${formatNumber(creator.followerCount)}
 Categories: ${creator.categories.join(', ')}
 30-day GMV: $${creator.gmv30d.toLocaleString()}
 Items sold (30d): ${creator.itemsSold30d}
-${productInfo ? `\nProduct to promote: ${productInfo}` : ''}
+${productInfo ? `\nProduct to promote: ${productInfo}` : ''}${sellerProduct?.name ? `\n\nSeller's Product:\n- Name: ${sellerProduct.name}${sellerProduct.description ? `\n- Description: ${sellerProduct.description}` : ''}${sellerProduct.commission ? `\n- Commission: ${sellerProduct.commission}%` : ''}` : ''}
 
 Generate a ${tone} invitation message.`;
 

@@ -141,6 +141,10 @@ export interface UserSettings {
   defaultTone: InviteMessage['tone'];
   language: 'en' | 'zh';
   theme: 'light' | 'dark' | 'system';
+  // Product info (injected into AI invites)
+  productName?: string;
+  productDescription?: string;
+  commissionRate?: number;
   // Integration
   formspreeId?: string;   // Formspree form ID for online feedback submission
   // Tracking
@@ -176,8 +180,12 @@ export interface UsageStats {
   aiGenerationsToday: number;
   creatorsScraped: number;
   productsTracked: number;
+  trialAiUsed: number;      // Lifetime trial AI calls used (never resets)
   lastResetDate: string;  // YYYY-MM-DD
 }
+
+/** Trial mode constants */
+export const TRIAL_AI_LIMIT = 5;  // Free AI calls without API key
 
 /** Limits per subscription tier */
 export const TIER_LIMITS: Record<SubscriptionTier, {
@@ -190,7 +198,7 @@ export const TIER_LIMITS: Record<SubscriptionTier, {
     dailyInvites: 5,
     dailyAiGenerations: 10,
     maxTrackedProducts: 3,
-    maxSavedCreators: 50,
+    maxSavedCreators: 200,
   },
   pro: {
     dailyInvites: 100,

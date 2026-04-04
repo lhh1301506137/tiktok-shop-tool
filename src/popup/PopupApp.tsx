@@ -53,6 +53,7 @@ export function PopupApp() {
       aiGenerationsToday: 0,
       creatorsScraped: 0,
       productsTracked: 0,
+      trialAiUsed: 0,
       lastResetDate: new Date().toISOString().split('T')[0],
     });
   }
@@ -150,6 +151,7 @@ export function PopupApp() {
             settings={settings}
             apiKeyInput={apiKeyInput}
             saving={saving}
+            trialUsed={usage?.trialAiUsed || 0}
             onApiKeyChange={setApiKeyInput}
             onSaveApiKey={saveApiKey}
             onUpdateSetting={updateSetting}
@@ -160,11 +162,11 @@ export function PopupApp() {
       {/* Footer */}
       <div className="border-t border-tiktok-gray-100 p-3 text-center">
         <p className="text-xs text-tiktok-gray-400">
-          ShopPilot v0.2.0 |{' '}
+          ShopPilot v0.4.0 |{' '}
           <button onClick={() => setShowFeedback(!showFeedback)} className="text-brand-primary hover:underline">
             {showFeedback ? 'Back' : 'Feedback'}
           </button>{' '}
-          | <a href="#" className="text-brand-primary hover:underline">Upgrade</a>
+          | <a href="https://shoppilot.pro/#pricing" target="_blank" rel="noopener" className="text-brand-primary hover:underline">Upgrade</a>
         </p>
       </div>
     </div>

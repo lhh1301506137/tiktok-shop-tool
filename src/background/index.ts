@@ -26,7 +26,7 @@ import {
   LimitCheckResult,
 } from '@/utils/storage';
 import { generateInviteMessage, generateListingCopy } from '@/services/ai';
-import { startBatchInvite, stopBatchInvite, getQueueState } from '@/services/inviteQueue';
+import { startBatchInvite, stopBatchInvite, getQueueState, recoverQueue } from '@/services/inviteQueue';
 
 // ---- Tier Limit Helpers ----
 
@@ -91,9 +91,17 @@ async function handleMessage(message: MessageType) {
       const aiCheck = await checkDailyAILimit();
       if (!aiCheck.allowed) return limitReachedError(aiCheck);
 
+      // Load seller's product info from settings
+      const inviteSettings = await getSettings();
+      const sellerProduct = inviteSettings.productName
+        ? { name: inviteSettings.productName, description: inviteSettings.productDescription, commission: inviteSettings.commissionRate }
+        : undefined;
+
       const inviteResult = await generateInviteMessage(
         message.payload.creator,
-        message.payload.tone as any
+        message.payload.tone as any,
+        undefined,
+        sellerProduct,
       );
       // Save to AI history & increment usage
       if (!('error' in inviteResult)) {
@@ -376,6 +384,14 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       language: 'en',
       theme: 'light',
     });
+  }
+});
+
+// ---- Recover interrupted batch queue on SW restart ----
+
+recoverQueue().then(recovered => {
+  if (recovered) {
+    console.log('[ShopPilot] Resumed interrupted batch invite queue');
   }
 });
 

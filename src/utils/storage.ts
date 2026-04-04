@@ -1,4 +1,4 @@
-import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, TIER_LIMITS } from '@/types';
+import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, TIER_LIMITS, TRIAL_AI_LIMIT } from '@/types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   tier: 'free' as SubscriptionTier,
@@ -16,8 +16,12 @@ const DEFAULT_USAGE: UsageStats = {
   aiGenerationsToday: 0,
   creatorsScraped: 0,
   productsTracked: 0,
+  trialAiUsed: 0,
   lastResetDate: new Date().toISOString().split('T')[0],
 };
+
+/** URL for upgrade / pricing page */
+export const UPGRADE_URL = 'https://shoppilot.pro/#pricing';
 
 // ---- Settings ----
 
@@ -362,4 +366,31 @@ export async function checkSavedCreatorLimit(): Promise<LimitCheckResult> {
     tier: settings.tier,
     limitType: 'maxSavedCreators',
   };
+}
+
+// ---- Trial Mode ----
+
+export interface TrialStatus {
+  available: boolean;  // true if user has no API key AND trial credits left
+  used: number;
+  limit: number;
+  hasApiKey: boolean;
+}
+
+export async function getTrialStatus(): Promise<TrialStatus> {
+  const settings = await getSettings();
+  const usage = await getUsage();
+  const hasApiKey = !!settings.apiKey;
+  return {
+    available: !hasApiKey && usage.trialAiUsed < TRIAL_AI_LIMIT,
+    used: usage.trialAiUsed,
+    limit: TRIAL_AI_LIMIT,
+    hasApiKey,
+  };
+}
+
+export async function incrementTrialUsage(): Promise<void> {
+  const usage = await getUsage();
+  usage.trialAiUsed += 1;
+  await chrome.storage.local.set({ usage });
 }

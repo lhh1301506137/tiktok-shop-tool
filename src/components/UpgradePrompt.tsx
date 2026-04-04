@@ -1,5 +1,7 @@
 import React from 'react';
 
+const UPGRADE_URL = 'https://shoppilot.pro/#pricing';
+
 interface UpgradePromptProps {
   tier: string;
   limitType: string;
@@ -15,6 +17,10 @@ const LIMIT_LABELS: Record<string, string> = {
   maxSavedCreators: 'saved creators',
 };
 
+function handleUpgrade() {
+  chrome.tabs.create({ url: UPGRADE_URL });
+}
+
 export function UpgradePrompt({ tier, limitType, current, limit, compact }: UpgradePromptProps) {
   const label = LIMIT_LABELS[limitType] || limitType;
 
@@ -23,7 +29,9 @@ export function UpgradePrompt({ tier, limitType, current, limit, compact }: Upgr
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
         <p className="text-amber-800 text-xs">
           ⚠️ {current}/{limit} {label} used ({tier.toUpperCase()} plan).{' '}
-          <button className="text-brand-primary font-semibold hover:underline">Upgrade</button>
+          <button onClick={handleUpgrade} className="text-brand-primary font-semibold hover:underline">
+            Upgrade
+          </button>
         </p>
       </div>
     );
@@ -39,7 +47,7 @@ export function UpgradePrompt({ tier, limitType, current, limit, compact }: Upgr
         You've used {current}/{limit} {label}.
         Upgrade to Pro or Business for higher limits.
       </p>
-      <button className="btn-primary text-xs !py-1.5 !px-4">
+      <button onClick={handleUpgrade} className="btn-primary text-xs !py-1.5 !px-4">
         Upgrade Plan
       </button>
     </div>
@@ -66,8 +74,10 @@ export function UsageWarning({ label, current, limit, tier }: {
         : 'bg-amber-50 border-amber-200 text-amber-700'
     }`}>
       {isAtLimit
-        ? `🚫 ${label}: ${current}/${limit} — limit reached (${tier.toUpperCase()})`
-        : `⚠️ ${label}: ${current}/${limit} — approaching limit (${tier.toUpperCase()})`
+        ? <>🚫 {label}: {current}/{limit} — limit reached ({tier.toUpperCase()}).{' '}
+            <button onClick={handleUpgrade} className="font-semibold underline">Upgrade</button>
+          </>
+        : `⚠️ ${label}: ${current}/{limit} — approaching limit (${tier.toUpperCase()})`
       }
     </div>
   );

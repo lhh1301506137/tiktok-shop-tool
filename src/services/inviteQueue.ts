@@ -1,6 +1,7 @@
 /**
  * ShopPilot - Batch Invite Queue Service
- * Manages queued invitations with rate limiting, retry, and progress tracking.
+ * Manages queued invitations with rate limiting, retry, progress tracking,
+ * and persistence (survives Service Worker restarts).
  */
 
 import { Creator } from '@/types';
@@ -29,12 +30,15 @@ export interface InviteQueueState {
     failed: number;
     skipped: number;
   };
+  /** Set to true when state was recovered after a SW restart */
+  recovered?: boolean;
 }
 
 const MAX_RETRIES = 2;
 const MIN_DELAY_MS = 3000;   // Minimum 3s between invites (anti-ban)
 const MAX_DELAY_MS = 8000;   // Maximum 8s between invites (randomized)
 const JITTER_MS = 2000;      // Random jitter
+const STORAGE_KEY = 'inviteQueueState';
 
 let queueState: InviteQueueState = {
   jobs: [],
@@ -69,6 +73,56 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// ---- Persistence ----
+
+/** Save current queue state to chrome.storage.session (survives SW restart, cleared on browser close) */
+async function persistState(): Promise<void> {
+  try {
+    await chrome.storage.session.set({ [STORAGE_KEY]: queueState });
+  } catch {
+    // chrome.storage.session may not be available in all environments
+    console.warn('[ShopPilot] Failed to persist queue state');
+  }
+}
+
+/** Clear persisted state (after queue finishes) */
+async function clearPersistedState(): Promise<void> {
+  try {
+    await chrome.storage.session.remove(STORAGE_KEY);
+  } catch {}
+}
+
+/** Recover queue state after SW restart. Returns true if there's unfinished work. */
+export async function recoverQueue(): Promise<boolean> {
+  try {
+    const result = await chrome.storage.session.get(STORAGE_KEY);
+    const saved: InviteQueueState | undefined = result[STORAGE_KEY];
+
+    if (!saved || !saved.isRunning) return false;
+
+    // Mark any 'processing' job back to 'queued' for retry
+    for (const job of saved.jobs) {
+      if (job.status === 'processing') {
+        job.status = 'queued';
+      }
+    }
+
+    saved.recovered = true;
+    queueState = saved;
+    notifyListeners();
+
+    console.log(`[ShopPilot] Recovered invite queue: ${saved.stats.completed}/${saved.stats.total} completed, resuming from index ${saved.currentIndex}`);
+
+    // Resume processing
+    processQueue().catch(console.error);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ---- Public API ----
+
 /** Get current queue state (for polling from UI) */
 export function getQueueState(): InviteQueueState {
   return { ...queueState };
@@ -83,11 +137,17 @@ export async function startBatchInvite(
     return { success: false, error: 'A batch invite is already running' };
   }
 
+  // Load seller's product info for AI generation
+  const settings = await getSettings();
+  const sellerProduct = settings.productName
+    ? { name: settings.productName, description: settings.productDescription, commission: settings.commissionRate }
+    : undefined;
+
   // Generate messages for all creators via AI
   const jobs: InviteJob[] = [];
   for (const creator of creators) {
     try {
-      const msg = await generateInviteMessage(creator, tone as any);
+      const msg = await generateInviteMessage(creator, tone as any, undefined, sellerProduct);
       if ('error' in msg) {
         jobs.push({
           id: `invite-${creator.id}-${Date.now()}`,
@@ -132,6 +192,7 @@ export async function startBatchInvite(
   };
 
   notifyListeners();
+  await persistState();
 
   // Start processing in background (non-blocking)
   processQueue().catch(console.error);
@@ -143,9 +204,11 @@ export async function startBatchInvite(
 export function stopBatchInvite() {
   queueState.isRunning = false;
   notifyListeners();
+  persistState();
 }
 
-/** Core queue processor */
+// ---- Core Queue Processor ----
+
 async function processQueue() {
   while (queueState.isRunning && queueState.currentIndex < queueState.jobs.length) {
     const job = queueState.jobs[queueState.currentIndex];
@@ -158,19 +221,26 @@ async function processQueue() {
     // Check per-invite limit
     const inviteLimitCheck = await checkDailyInviteLimit();
     if (!inviteLimitCheck.allowed) {
-      job.status = 'skipped';
-      job.error = `Daily invite limit reached (${inviteLimitCheck.limit}). Upgrade to send more.`;
-      job.completedAt = Date.now();
-      queueState.stats.skipped++;
-      queueState.stats.completed++;
+      // Skip all remaining jobs
+      for (let i = queueState.currentIndex; i < queueState.jobs.length; i++) {
+        const j = queueState.jobs[i];
+        if (j.status === 'queued') {
+          j.status = 'skipped';
+          j.error = `Daily invite limit reached (${inviteLimitCheck.limit}). Upgrade to send more.`;
+          j.completedAt = Date.now();
+          queueState.stats.skipped++;
+          queueState.stats.completed++;
+        }
+      }
       notifyListeners();
-      queueState.currentIndex++;
-      continue;
+      await persistState();
+      break;
     }
 
     job.status = 'processing';
     job.startedAt = Date.now();
     notifyListeners();
+    await persistState();
 
     const success = await executeInvite(job);
 
@@ -191,6 +261,7 @@ async function processQueue() {
       job.status = 'queued';
       // Don't advance index — retry same job
       notifyListeners();
+      await persistState();
       await sleep(randomDelay());
       continue;
     } else {
@@ -201,6 +272,7 @@ async function processQueue() {
     }
 
     notifyListeners();
+    await persistState();
     queueState.currentIndex++;
 
     // Rate-limiting delay between invites
@@ -210,7 +282,9 @@ async function processQueue() {
   }
 
   queueState.isRunning = false;
+  queueState.recovered = false;
   notifyListeners();
+  await clearPersistedState();
 }
 
 /** Execute a single invite by sending message to content script */

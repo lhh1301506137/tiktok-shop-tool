@@ -1,10 +1,11 @@
 import React from 'react';
-import { UserSettings, AIProvider, AI_PROVIDERS } from '@/types';
+import { UserSettings, AIProvider, AI_PROVIDERS, TRIAL_AI_LIMIT } from '@/types';
 
 interface SettingsTabProps {
   settings: UserSettings | null;
   apiKeyInput: string;
   saving: boolean;
+  trialUsed?: number;
   onApiKeyChange: (key: string) => void;
   onSaveApiKey: () => void;
   onUpdateSetting: (partial: Partial<UserSettings>) => void;
@@ -14,15 +15,34 @@ export function SettingsTab({
   settings,
   apiKeyInput,
   saving,
+  trialUsed = 0,
   onApiKeyChange,
   onSaveApiKey,
   onUpdateSetting,
 }: SettingsTabProps) {
   const currentProvider = settings?.aiProvider || 'minimax';
   const providerConfig = AI_PROVIDERS[currentProvider];
+  const hasApiKey = !!settings?.apiKey;
 
   return (
     <div className="space-y-4">
+      {/* Trial Status (when no key configured) */}
+      {!hasApiKey && (
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-blue-800 text-xs font-semibold mb-2">
+            🧪 Trial Mode: {TRIAL_AI_LIMIT - trialUsed}/{TRIAL_AI_LIMIT} free AI calls left
+          </p>
+          <p className="text-blue-700 text-[11px] mb-2">
+            Set up your own key for unlimited AI calls. We recommend <strong>DeepSeek</strong> — cheapest and fastest:
+          </p>
+          <ol className="text-[11px] text-blue-700 space-y-1 ml-4 list-decimal">
+            <li>Go to <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" className="underline font-medium">platform.deepseek.com</a></li>
+            <li>Sign up (free) → Click "Create API Key"</li>
+            <li>Copy the key → Select "DeepSeek" below → Paste → Save</li>
+          </ol>
+        </div>
+      )}
+
       {/* AI Provider */}
       <div>
         <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
@@ -101,33 +121,61 @@ export function SettingsTab({
       </div>
 
       {/* Saved indicator */}
-      {settings?.apiKey && (
+      {hasApiKey && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-2">
           <p className="text-green-700 text-xs">
-            ✅ {providerConfig.name} key configured &middot; Model: {settings.aiModel || providerConfig.defaultModel}
+            ✅ {providerConfig.name} key configured &middot; Model: {settings?.aiModel || providerConfig.defaultModel}
           </p>
         </div>
       )}
 
       <hr className="border-tiktok-gray-100" />
 
-      {/* Default Commission */}
+      {/* My Product — injected into AI invites */}
       <div>
-        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-          Default Commission Rate
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min="1"
-            max="80"
-            value={settings?.defaultCommission || 15}
-            onChange={e => onUpdateSetting({ defaultCommission: parseInt(e.target.value) })}
-            className="input-field text-sm w-20"
-          />
-          <span className="text-sm text-tiktok-gray-500">%</span>
+        <h3 className="text-sm font-semibold text-tiktok-gray-700 mb-2">My Product</h3>
+        <p className="text-[11px] text-tiktok-gray-400 mb-3">
+          This info is automatically included in AI-generated invitations to make them more relevant.
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">Product Name</label>
+            <input
+              type="text"
+              value={settings?.productName || ''}
+              onChange={e => onUpdateSetting({ productName: e.target.value || undefined })}
+              placeholder="e.g. Glow Serum, LED Desk Lamp..."
+              className="input-field text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">One-line Description</label>
+            <input
+              type="text"
+              value={settings?.productDescription || ''}
+              onChange={e => onUpdateSetting({ productDescription: e.target.value || undefined })}
+              placeholder="e.g. Vitamin C serum for brighter skin, 30ml"
+              className="input-field text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">Commission Rate</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="1"
+                max="80"
+                value={settings?.commissionRate || settings?.defaultCommission || 15}
+                onChange={e => onUpdateSetting({ commissionRate: parseInt(e.target.value), defaultCommission: parseInt(e.target.value) })}
+                className="input-field text-sm w-20"
+              />
+              <span className="text-sm text-tiktok-gray-500">%</span>
+            </div>
+          </div>
         </div>
       </div>
+
+      <hr className="border-tiktok-gray-100" />
 
       {/* Invitation Tone */}
       <div>

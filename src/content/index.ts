@@ -188,7 +188,7 @@ function onPageChange() {
   const isAffiliatePage = AFFILIATE_PATHS.some(p => path.includes(p));
 
   if (isAffiliatePage) {
-    showStatus(`Monitoring creator data on this page...`);
+    showStatus(`Monitoring creator data... Keep scrolling to capture more!`);
   }
 
   if (path.includes('/view/product/')) {

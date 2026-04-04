@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ShopPilot - TikTok Shop Seller Tool",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "AI-powered creator outreach, competitor monitoring, and listing optimization for TikTok Shop sellers.",
   "permissions": [
     "storage",

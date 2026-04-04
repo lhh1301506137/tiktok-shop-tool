@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Creator, InviteMessage } from '@/types';
+import { Creator, InviteMessage, AIProvider, AI_PROVIDERS } from '@/types';
 import { useToast } from '@/components/Toast';
-import { getSavedCreators, saveCreators } from '@/utils/storage';
+import { getSavedCreators, saveCreators, getSettings, updateSettings } from '@/utils/storage';
 import { CreatorsTab } from '@/components/CreatorsTab';
 import { InviteTab } from '@/components/InviteTab';
 import { ListingTab } from '@/components/ListingTab';
@@ -17,7 +17,18 @@ export function SidePanelApp() {
   const [generatedMessage, setGeneratedMessage] = useState<InviteMessage | null>(null);
   const [loading, setLoading] = useState(false);
   const [currentTone, setCurrentTone] = useState<Tone>('professional');
+  const [aiProvider, setAiProvider] = useState<AIProvider>('deepseek');
+  const [aiModel, setAiModel] = useState('');
+  const [showModelPicker, setShowModelPicker] = useState(false);
   const { showToast, ToastElement } = useToast();
+
+  // Load AI settings
+  useEffect(() => {
+    getSettings().then(s => {
+      setAiProvider(s.aiProvider || 'deepseek');
+      setAiModel(s.aiModel || '');
+    });
+  }, []);
 
   // Check for recovered/running batch on mount
   useEffect(() => {
@@ -245,9 +256,60 @@ export function SidePanelApp() {
         </div>
       )}
 
-      <div className="bg-white border-b border-tiktok-gray-200 px-4 py-3 flex items-center gap-2">
-        <span className="text-xl">🚀</span>
-        <h1 className="font-bold text-tiktok-gray-900">ShopPilot</h1>
+      <div className="bg-white border-b border-tiktok-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">🚀</span>
+          <h1 className="font-bold text-tiktok-gray-900">ShopPilot</h1>
+        </div>
+        {/* AI Model Indicator / Picker */}
+        <div className="relative">
+          <button
+            onClick={() => setShowModelPicker(!showModelPicker)}
+            className="flex items-center gap-1 px-2 py-1 text-[11px] text-tiktok-gray-600 bg-tiktok-gray-100 hover:bg-tiktok-gray-200 rounded-md transition-colors"
+          >
+            <span className="text-xs">🤖</span>
+            <span className="font-medium truncate max-w-[100px]">
+              {AI_PROVIDERS[aiProvider]?.name || aiProvider}
+            </span>
+            <span className="text-[9px] text-tiktok-gray-400">▼</span>
+          </button>
+          {showModelPicker && (
+            <>
+              <div className="fixed inset-0 z-30" onClick={() => setShowModelPicker(false)} />
+              <div className="absolute right-0 top-full mt-1 bg-white border border-tiktok-gray-200 rounded-lg shadow-lg z-40 w-52 max-h-64 overflow-y-auto">
+                {(Object.entries(AI_PROVIDERS) as [AIProvider, typeof AI_PROVIDERS[AIProvider]][])
+                  .filter(([key]) => key !== 'custom')
+                  .map(([key, config]) => (
+                    <div key={key} className="border-b border-tiktok-gray-100 last:border-b-0">
+                      <p className="text-[10px] font-semibold text-tiktok-gray-500 px-3 pt-2 pb-0.5">{config.name}</p>
+                      {config.models.map(model => (
+                        <button
+                          key={model}
+                          onClick={async () => {
+                            setAiProvider(key);
+                            setAiModel(model);
+                            await updateSettings({ aiProvider: key, aiModel: model });
+                            setShowModelPicker(false);
+                            showToast(`Switched to ${config.name} / ${model}`, 'success');
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs hover:bg-tiktok-gray-50 transition-colors ${
+                            aiProvider === key && (aiModel || config.defaultModel) === model
+                              ? 'text-brand-primary font-medium bg-brand-primary/5'
+                              : 'text-tiktok-gray-700'
+                          }`}
+                        >
+                          {model}
+                          {aiProvider === key && (aiModel || config.defaultModel) === model && (
+                            <span className="ml-1 text-brand-primary">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="bg-white border-b border-tiktok-gray-200 flex">

@@ -45,9 +45,9 @@ function isRetryable(status: number): boolean {
 }
 
 // Built-in trial key (DeepSeek — cost ~¥0.01/call, obfuscated at build time)
-const _TK = ['sk-', '0f9a2b', '3c4d5e', '6f7890'].join('');
-const TRIAL_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-const TRIAL_MODEL = 'deepseek-chat';
+const _TK = ['sk-cp-VTM8LL-', '8oOnOdyFYaEm4L', 'HUgFGLfMtyiTMup', 'WwaaP7VaGG3L7kO', 'HEYW6Vq90q0UFih', '27-Nkjd98R_qLxJ', 'jJMQ6_XHZFqonCm', '9A4rP5UhA8cptyf', 'mxzkdKY'].join('');
+const TRIAL_API_URL = 'https://api.minimax.chat/v1/text/chatcompletion_v2';
+const TRIAL_MODEL = 'MiniMax-M2.5';
 
 async function callAI(
   systemPrompt: string,

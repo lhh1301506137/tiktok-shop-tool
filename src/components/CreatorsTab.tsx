@@ -23,7 +23,28 @@ export function CreatorsTab({
   const [sortBy, setSortBy] = useState<SortBy>('gmv');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showFilters, setShowFilters] = useState(false);
+  const [minFollowers, setMinFollowers] = useState(0);
+  const [minGmv, setMinGmv] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Filter presets
+  const followerPresets = [
+    { label: 'All', value: 0 },
+    { label: '1K+', value: 1000 },
+    { label: '10K+', value: 10000 },
+    { label: '50K+', value: 50000 },
+    { label: '100K+', value: 100000 },
+    { label: '500K+', value: 500000 },
+  ];
+  const gmvPresets = [
+    { label: 'All', value: 0 },
+    { label: '$100+', value: 100 },
+    { label: '$1K+', value: 1000 },
+    { label: '$5K+', value: 5000 },
+    { label: '$10K+', value: 10000 },
+    { label: '$50K+', value: 50000 },
+  ];
 
   // Extract all unique categories
   const allCategories = useMemo(() => {
@@ -36,13 +57,17 @@ export function CreatorsTab({
     return ['All', ...Array.from(cats).sort()];
   }, [creators]);
 
+  const hasActiveFilters = minFollowers > 0 || minGmv > 0 || selectedCategory !== 'All';
+
   const filtered = useMemo(() => {
     return creators
       .filter(c => {
         const matchesSearch = c.displayName.toLowerCase().includes(search.toLowerCase()) ||
           c.username.toLowerCase().includes(search.toLowerCase());
         const matchesCategory = selectedCategory === 'All' || (c.categories && c.categories.includes(selectedCategory));
-        return matchesSearch && matchesCategory;
+        const matchesFollowers = c.followerCount >= minFollowers;
+        const matchesGmv = c.gmv30d >= minGmv;
+        return matchesSearch && matchesCategory && matchesFollowers && matchesGmv;
       })
       .sort((a, b) => {
         switch (sortBy) {
@@ -53,7 +78,7 @@ export function CreatorsTab({
           default: return 0;
         }
       });
-  }, [creators, search, sortBy, selectedCategory]);
+  }, [creators, search, sortBy, selectedCategory, minFollowers, minGmv]);
 
   // Virtual scrolling — only render visible cards
   const { virtualItems, totalHeight } = useVirtualList(scrollContainerRef, {
@@ -127,6 +152,16 @@ export function CreatorsTab({
             onChange={e => setSearch(e.target.value)}
             className="input-field text-sm flex-1 h-9"
           />
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`h-9 px-2.5 text-xs font-medium border rounded-lg transition-colors ${
+              hasActiveFilters
+                ? 'bg-brand-primary text-white border-brand-primary'
+                : 'bg-white text-tiktok-gray-600 border-tiktok-gray-200 hover:bg-tiktok-gray-50'
+            }`}
+          >
+            🔍 {hasActiveFilters ? '✓' : ''}
+          </button>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as SortBy)}
@@ -138,6 +173,56 @@ export function CreatorsTab({
             <option value="name">Name A-Z</option>
           </select>
         </div>
+
+        {/* Expanded Filters Panel */}
+        {showFilters && (
+          <div className="bg-tiktok-gray-50 rounded-lg p-2.5 space-y-2.5 border border-tiktok-gray-200">
+            <div>
+              <p className="text-[10px] font-semibold text-tiktok-gray-500 mb-1.5">Min Followers</p>
+              <div className="flex gap-1 flex-wrap">
+                {followerPresets.map(p => (
+                  <button
+                    key={p.value}
+                    onClick={() => setMinFollowers(p.value)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      minFollowers === p.value
+                        ? 'bg-brand-primary text-white'
+                        : 'bg-white text-tiktok-gray-600 border border-tiktok-gray-200 hover:bg-tiktok-gray-100'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold text-tiktok-gray-500 mb-1.5">Min GMV (30d)</p>
+              <div className="flex gap-1 flex-wrap">
+                {gmvPresets.map(p => (
+                  <button
+                    key={p.value}
+                    onClick={() => setMinGmv(p.value)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                      minGmv === p.value
+                        ? 'bg-brand-primary text-white'
+                        : 'bg-white text-tiktok-gray-600 border border-tiktok-gray-200 hover:bg-tiktok-gray-100'
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {hasActiveFilters && (
+              <button
+                onClick={() => { setMinFollowers(0); setMinGmv(0); setSelectedCategory('All'); }}
+                className="text-[10px] text-red-500 hover:underline font-medium"
+              >
+                ✕ Clear all filters
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Categories Scroller */}
         <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">

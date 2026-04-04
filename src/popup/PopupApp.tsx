@@ -162,7 +162,7 @@ export function PopupApp() {
       {/* Footer */}
       <div className="border-t border-tiktok-gray-100 p-3 text-center">
         <p className="text-xs text-tiktok-gray-400">
-          ShopPilot v0.5.0 |{' '}
+          ShopPilot v0.5.1 |{' '}
           <button onClick={() => setShowFeedback(!showFeedback)} className="text-brand-primary hover:underline">
             {showFeedback ? 'Back' : 'Feedback'}
           </button>{' '}

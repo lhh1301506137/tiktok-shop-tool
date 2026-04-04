@@ -20,7 +20,7 @@ export function SettingsTab({
   onSaveApiKey,
   onUpdateSetting,
 }: SettingsTabProps) {
-  const currentProvider = settings?.aiProvider || 'minimax';
+  const currentProvider = settings?.aiProvider || 'deepseek';
   const providerConfig = AI_PROVIDERS[currentProvider];
   const hasApiKey = !!settings?.apiKey;
 

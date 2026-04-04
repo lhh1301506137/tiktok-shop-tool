@@ -42,7 +42,7 @@ export function PopupApp() {
     } catch {
       // Fallback: read settings directly from storage
       const stored = await chrome.storage.local.get('settings');
-      const fallback = { tier: 'free' as const, defaultCommission: 15, defaultTone: 'professional' as const, language: 'en', theme: 'light' as const, aiProvider: 'minimax' as AIProvider, ...stored.settings };
+      const fallback = { tier: 'free' as const, defaultCommission: 15, defaultTone: 'professional' as const, language: 'en', theme: 'light' as const, aiProvider: 'deepseek' as AIProvider, ...stored.settings };
       setSettings(fallback);
       setApiKeyInput(fallback.apiKey || '');
     }
@@ -162,7 +162,7 @@ export function PopupApp() {
       {/* Footer */}
       <div className="border-t border-tiktok-gray-100 p-3 text-center">
         <p className="text-xs text-tiktok-gray-400">
-          ShopPilot v0.4.0 |{' '}
+          ShopPilot v0.5.0 |{' '}
           <button onClick={() => setShowFeedback(!showFeedback)} className="text-brand-primary hover:underline">
             {showFeedback ? 'Back' : 'Feedback'}
           </button>{' '}

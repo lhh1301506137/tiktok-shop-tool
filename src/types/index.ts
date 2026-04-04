@@ -37,6 +37,16 @@ export interface InviteMessage {
   sent: boolean;
 }
 
+/** Saved invite template for reuse */
+export interface InviteTemplate {
+  id: string;
+  name: string;
+  body: string;
+  tone: InviteMessage['tone'];
+  createdAt: number;
+  useCount: number;  // track how popular each template is
+}
+
 /** Competitor product being tracked */
 export interface TrackedProduct {
   id: string;
@@ -236,6 +246,15 @@ export interface UsageStats {
   productsTracked: number;
   trialAiUsed: number;      // Lifetime trial AI calls used (never resets)
   lastResetDate: string;  // YYYY-MM-DD
+}
+
+/** Daily usage snapshot for historical stats */
+export interface DailySnapshot {
+  date: string;  // YYYY-MM-DD
+  invitesSent: number;
+  aiGenerations: number;
+  creatorsTotal: number;     // cumulative count at end of day
+  productsTracked: number;   // cumulative count at end of day
 }
 
 /** Trial mode constants */

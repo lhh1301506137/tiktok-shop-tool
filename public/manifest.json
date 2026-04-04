@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ShopPilot - TikTok Shop Seller Tool",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "AI-powered creator outreach, competitor monitoring, and listing optimization for TikTok Shop sellers.",
   "permissions": [
     "storage",
@@ -24,7 +24,11 @@
     "https://www.tiktok.com/view/product/*",
     "https://api.minimax.chat/*",
     "https://api.openai.com/*",
-    "https://api.deepseek.com/*"
+    "https://api.deepseek.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://open.bigmodel.cn/*",
+    "https://api.moonshot.cn/*"
   ],
   "action": {
     "default_popup": "src/popup/index.html",

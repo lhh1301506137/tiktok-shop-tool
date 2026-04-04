@@ -378,7 +378,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // Set default settings
     await updateSettings({
       tier: 'free',
-      aiProvider: 'minimax',
+      aiProvider: 'deepseek',
       defaultCommission: 15,
       defaultTone: 'professional',
       language: 'en',

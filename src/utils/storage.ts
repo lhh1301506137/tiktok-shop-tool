@@ -1,8 +1,8 @@
-import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, TIER_LIMITS, TRIAL_AI_LIMIT } from '@/types';
+import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, InviteTemplate, DailySnapshot, TIER_LIMITS, TRIAL_AI_LIMIT } from '@/types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   tier: 'free' as SubscriptionTier,
-  aiProvider: 'minimax',
+  aiProvider: 'deepseek',
   dailyInvites: 5,
   dailyAiGenerations: 10,
   defaultCommission: 15,
@@ -46,6 +46,16 @@ export async function getUsage(): Promise<UsageStats> {
   // Auto-reset daily counters
   const today = new Date().toISOString().split('T')[0];
   if (usage.lastResetDate !== today) {
+    // Save yesterday's snapshot before resetting
+    if (usage.invitesSentToday > 0 || usage.aiGenerationsToday > 0) {
+      await saveDailySnapshot({
+        date: usage.lastResetDate,
+        invitesSent: usage.invitesSentToday,
+        aiGenerations: usage.aiGenerationsToday,
+        creatorsTotal: usage.creatorsScraped,
+        productsTracked: usage.productsTracked,
+      });
+    }
     usage.invitesSentToday = 0;
     usage.aiGenerationsToday = 0;
     usage.lastResetDate = today;
@@ -393,4 +403,109 @@ export async function incrementTrialUsage(): Promise<void> {
   const usage = await getUsage();
   usage.trialAiUsed += 1;
   await chrome.storage.local.set({ usage });
+}
+
+// ---- Invite Templates ----
+
+const MAX_TEMPLATES = 20;
+
+export async function getInviteTemplates(): Promise<InviteTemplate[]> {
+  const result = await chrome.storage.local.get('inviteTemplates');
+  return result.inviteTemplates || [];
+}
+
+export async function saveInviteTemplate(template: Omit<InviteTemplate, 'id' | 'createdAt' | 'useCount'>): Promise<InviteTemplate> {
+  const templates = await getInviteTemplates();
+  const newTemplate: InviteTemplate = {
+    ...template,
+    id: `tpl_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+    createdAt: Date.now(),
+    useCount: 0,
+  };
+  // Prepend (newest first); cap at MAX_TEMPLATES
+  templates.unshift(newTemplate);
+  if (templates.length > MAX_TEMPLATES) templates.length = MAX_TEMPLATES;
+  await chrome.storage.local.set({ inviteTemplates: templates });
+  return newTemplate;
+}
+
+export async function deleteInviteTemplate(id: string): Promise<void> {
+  const templates = await getInviteTemplates();
+  await chrome.storage.local.set({ inviteTemplates: templates.filter(t => t.id !== id) });
+}
+
+export async function incrementTemplateUseCount(id: string): Promise<void> {
+  const templates = await getInviteTemplates();
+  const tpl = templates.find(t => t.id === id);
+  if (tpl) {
+    tpl.useCount += 1;
+    await chrome.storage.local.set({ inviteTemplates: templates });
+  }
+}
+
+// ---- Daily Snapshots (Historical Stats) ----
+
+const MAX_SNAPSHOTS = 30;  // Keep 30 days of history
+
+async function saveDailySnapshot(snapshot: DailySnapshot): Promise<void> {
+  const result = await chrome.storage.local.get('dailySnapshots');
+  const snapshots: DailySnapshot[] = result.dailySnapshots || [];
+  // Avoid duplicates (same date)
+  const existing = snapshots.findIndex(s => s.date === snapshot.date);
+  if (existing >= 0) {
+    snapshots[existing] = snapshot;
+  } else {
+    snapshots.push(snapshot);
+  }
+  // Keep only recent entries
+  if (snapshots.length > MAX_SNAPSHOTS) {
+    snapshots.sort((a, b) => a.date.localeCompare(b.date));
+    snapshots.splice(0, snapshots.length - MAX_SNAPSHOTS);
+  }
+  await chrome.storage.local.set({ dailySnapshots: snapshots });
+}
+
+export async function getDailySnapshots(days: number = 7): Promise<DailySnapshot[]> {
+  const result = await chrome.storage.local.get('dailySnapshots');
+  const snapshots: DailySnapshot[] = result.dailySnapshots || [];
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+  return snapshots
+    .filter(s => s.date >= cutoffStr)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export interface WeeklyStats {
+  totalInvites: number;
+  totalAiGenerations: number;
+  dailyData: DailySnapshot[];
+  avgInvitesPerDay: number;
+  avgAiPerDay: number;
+}
+
+export async function getWeeklyStats(): Promise<WeeklyStats> {
+  const snapshots = await getDailySnapshots(7);
+  // Also include today's ongoing data
+  const usage = await getUsage();
+  const today: DailySnapshot = {
+    date: new Date().toISOString().split('T')[0],
+    invitesSent: usage.invitesSentToday,
+    aiGenerations: usage.aiGenerationsToday,
+    creatorsTotal: usage.creatorsScraped,
+    productsTracked: usage.productsTracked,
+  };
+  const allData = [...snapshots.filter(s => s.date !== today.date), today];
+
+  const totalInvites = allData.reduce((sum, d) => sum + d.invitesSent, 0);
+  const totalAiGenerations = allData.reduce((sum, d) => sum + d.aiGenerations, 0);
+  const activeDays = Math.max(allData.length, 1);
+
+  return {
+    totalInvites,
+    totalAiGenerations,
+    dailyData: allData,
+    avgInvitesPerDay: Math.round(totalInvites / activeDays * 10) / 10,
+    avgAiPerDay: Math.round(totalAiGenerations / activeDays * 10) / 10,
+  };
 }

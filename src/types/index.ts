@@ -283,6 +283,36 @@ export const LS_CONFIG = {
 /** Trial mode constants */
 export const TRIAL_AI_LIMIT = 5;  // Free AI calls without API key
 
+// ---- Referral System ----
+
+/** Referral info stored locally */
+export interface ReferralInfo {
+  /** This user's own referral code (generated from install ID) */
+  myCode: string;
+  /** Number of people who entered this user's code */
+  referralCount: number;
+  /** Bonus AI credits earned from referrals */
+  bonusAiCredits: number;
+  /** Whether this user has already applied someone else's code */
+  appliedCode?: string;
+  /** Bonus AI credits received as a referee */
+  refereeBonus: number;
+  /** Timestamps of successful referrals */
+  referralHistory: number[];
+}
+
+/** Referral reward constants */
+export const REFERRAL_REWARDS = {
+  /** Bonus AI credits the referrer gets per successful referral */
+  CREDITS_PER_REFERRAL: 5,
+  /** Max total bonus credits from referrals */
+  MAX_REFERRAL_BONUS: 50,
+  /** Bonus AI credits the new user gets when entering a referral code */
+  REFEREE_BONUS: 3,
+  /** Share link base (code appended as ?ref=CODE) */
+  SHARE_URL_BASE: 'https://shoppilot.pro',
+} as const;
+
 /** Limits per subscription tier */
 export const TIER_LIMITS: Record<SubscriptionTier, {
   dailyInvites: number;

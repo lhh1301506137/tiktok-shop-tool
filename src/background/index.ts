@@ -26,6 +26,8 @@ import {
   getLicense,
   saveLicense,
   clearLicense,
+  getReferralInfo,
+  applyReferralCode,
   LimitCheckResult,
 } from '@/utils/storage';
 import { generateInviteMessage, generateListingCopy } from '@/services/ai';
@@ -264,6 +266,16 @@ async function handleMessage(message: MessageType) {
 
     case 'GET_LICENSE' as any: {
       return await getLicense();
+    }
+
+    case 'GET_REFERRAL' as any: {
+      return await getReferralInfo();
+    }
+
+    case 'APPLY_REFERRAL_CODE' as any: {
+      const refCode = (message as any).payload?.code;
+      if (!refCode) return { success: false, message: 'No code provided', bonusCredits: 0 };
+      return await applyReferralCode(refCode);
     }
 
     default:

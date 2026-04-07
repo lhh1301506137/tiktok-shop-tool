@@ -1,4 +1,4 @@
-import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, InviteTemplate, DailySnapshot, LicenseInfo, TIER_LIMITS, TRIAL_AI_LIMIT } from '@/types';
+import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, InviteTemplate, DailySnapshot, LicenseInfo, ReferralInfo, TIER_LIMITS, TRIAL_AI_LIMIT, REFERRAL_REWARDS } from '@/types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   tier: 'free' as SubscriptionTier,
@@ -351,10 +351,13 @@ export async function checkDailyAILimit(): Promise<LimitCheckResult> {
   const settings = await getSettings();
   const usage = await getUsage();
   const limits = TIER_LIMITS[settings.tier];
+  // Referral bonus adds to the daily limit for free tier
+  const referralBonus = settings.tier === 'free' ? await getTotalReferralBonus() : 0;
+  const effectiveLimit = limits.dailyAiGenerations === -1 ? -1 : limits.dailyAiGenerations + referralBonus;
   return {
-    allowed: limits.dailyAiGenerations === -1 || usage.aiGenerationsToday < limits.dailyAiGenerations,
+    allowed: effectiveLimit === -1 || usage.aiGenerationsToday < effectiveLimit,
     current: usage.aiGenerationsToday,
-    limit: limits.dailyAiGenerations,
+    limit: effectiveLimit,
     tier: settings.tier,
     limitType: 'dailyAiGenerations',
   };
@@ -399,10 +402,13 @@ export async function getTrialStatus(): Promise<TrialStatus> {
   const settings = await getSettings();
   const usage = await getUsage();
   const hasApiKey = !!settings.apiKey;
+  // Referral bonus extends the trial limit
+  const referralBonus = await getTotalReferralBonus();
+  const effectiveLimit = TRIAL_AI_LIMIT + referralBonus;
   return {
-    available: !hasApiKey && usage.trialAiUsed < TRIAL_AI_LIMIT,
+    available: !hasApiKey && usage.trialAiUsed < effectiveLimit,
     used: usage.trialAiUsed,
-    limit: TRIAL_AI_LIMIT,
+    limit: effectiveLimit,
     hasApiKey,
   };
 }
@@ -534,4 +540,124 @@ export async function saveLicense(license: LicenseInfo): Promise<void> {
 export async function clearLicense(): Promise<void> {
   await chrome.storage.local.remove('license');
   await updateSettings({ tier: 'free' });
+}
+
+// ---- Referral System ----
+
+/** Generate a short, unique referral code for this install */
+function generateReferralCode(): string {
+  // 8-char alphanumeric code from random bytes
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
+  let code = 'SP-';
+  for (let i = 0; i < 6; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+/** Get or initialize referral info */
+export async function getReferralInfo(): Promise<ReferralInfo> {
+  const result = await chrome.storage.local.get('referral');
+  if (result.referral) return result.referral;
+
+  // First time — generate a code
+  const info: ReferralInfo = {
+    myCode: generateReferralCode(),
+    referralCount: 0,
+    bonusAiCredits: 0,
+    appliedCode: undefined,
+    refereeBonus: 0,
+    referralHistory: [],
+  };
+  await chrome.storage.local.set({ referral: info });
+  return info;
+}
+
+/** Save referral info */
+export async function saveReferralInfo(info: ReferralInfo): Promise<void> {
+  await chrome.storage.local.set({ referral: info });
+}
+
+/**
+ * Apply someone else's referral code.
+ * Returns { success, message, bonusCredits }.
+ * This only grants the REFEREE bonus (the referrer bonus is tracked differently — see note).
+ *
+ * NOTE: Since we have no backend, we can't actually notify the referrer.
+ * The referrer bonus is conceptual for now. With a future backend/cloud sync,
+ * we could validate codes server-side. For now, the referee gets their bonus
+ * and we record it locally. The referrer would need to share their code and
+ * the user manually enters it.
+ */
+export async function applyReferralCode(code: string): Promise<{
+  success: boolean;
+  message: string;
+  bonusCredits: number;
+}> {
+  const info = await getReferralInfo();
+
+  // Already applied a code
+  if (info.appliedCode) {
+    return {
+      success: false,
+      message: `You already used a referral code (${info.appliedCode}).`,
+      bonusCredits: 0,
+    };
+  }
+
+  // Can't use own code
+  if (code.toUpperCase() === info.myCode.toUpperCase()) {
+    return {
+      success: false,
+      message: "You can't use your own referral code!",
+      bonusCredits: 0,
+    };
+  }
+
+  // Basic format check (SP-XXXXXX)
+  const codeUpper = code.toUpperCase().trim();
+  if (!/^SP-[A-Z2-9]{6}$/.test(codeUpper)) {
+    return {
+      success: false,
+      message: 'Invalid referral code format. Codes look like SP-ABC234.',
+      bonusCredits: 0,
+    };
+  }
+
+  // Apply the code — give referee their bonus
+  info.appliedCode = codeUpper;
+  info.refereeBonus = REFERRAL_REWARDS.REFEREE_BONUS;
+  await saveReferralInfo(info);
+
+  return {
+    success: true,
+    message: `Referral code applied! You got ${REFERRAL_REWARDS.REFEREE_BONUS} bonus AI credits.`,
+    bonusCredits: REFERRAL_REWARDS.REFEREE_BONUS,
+  };
+}
+
+/**
+ * Simulate a referral credit (for testing/demo — in production this would
+ * be triggered by backend when a new user enters this user's code).
+ * Adds bonus credits to the referrer.
+ */
+export async function addReferralCredit(): Promise<ReferralInfo> {
+  const info = await getReferralInfo();
+  if (info.bonusAiCredits >= REFERRAL_REWARDS.MAX_REFERRAL_BONUS) {
+    return info; // maxed out
+  }
+  info.referralCount += 1;
+  info.bonusAiCredits = Math.min(
+    info.bonusAiCredits + REFERRAL_REWARDS.CREDITS_PER_REFERRAL,
+    REFERRAL_REWARDS.MAX_REFERRAL_BONUS
+  );
+  info.referralHistory.push(Date.now());
+  await saveReferralInfo(info);
+  return info;
+}
+
+/** Get total bonus AI credits from referrals (referrer + referee) */
+export async function getTotalReferralBonus(): Promise<number> {
+  const info = await getReferralInfo();
+  return info.bonusAiCredits + info.refereeBonus;
 }

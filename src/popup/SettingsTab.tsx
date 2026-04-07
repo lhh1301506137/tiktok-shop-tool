@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { UserSettings, AIProvider, AI_PROVIDERS, LicenseInfo, LS_CONFIG, TRIAL_AI_LIMIT } from '@/types';
+import { ReferralSection } from '@/components/ReferralSection';
 
 interface SettingsTabProps {
   settings: UserSettings | null;
@@ -169,6 +170,9 @@ export function SettingsTab({
           <p className="text-green-600 text-[11px] mt-1.5">✅ {licenseSuccess}</p>
         )}
       </div>
+
+      {/* ---- Referral ---- */}
+      <ReferralSection />
 
       <hr className="border-tiktok-gray-100" />
 

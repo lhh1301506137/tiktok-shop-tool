@@ -1,0 +1,203 @@
+export const en = {
+  // Common
+  'app.name': 'ShopPilot',
+  'app.tagline': 'TikTok Shop Seller Tool',
+  'app.version': 'ShopPilot v0.6.1',
+  'common.save': 'Save',
+  'common.cancel': 'Cancel',
+  'common.delete': 'Delete',
+  'common.copy': 'Copy',
+  'common.copied': '✓ Copied',
+  'common.loading': 'Loading...',
+  'common.processing': 'Processing...',
+  'common.upgrade': 'Upgrade',
+  'common.back': 'Back',
+  'common.feedback': 'Feedback',
+  'common.search': 'Search',
+  'common.clear': 'Clear',
+  'common.apply': 'Apply',
+  'common.close': 'Close',
+  'common.generate': 'Generate',
+  'common.send': 'Send',
+  'common.refresh': 'Refresh',
+  'common.select_all': 'Select All',
+  'common.deselect_all': 'Deselect All',
+
+  // Tiers
+  'tier.free': 'FREE',
+  'tier.pro': 'PRO',
+  'tier.business': 'BUSINESS',
+
+  // Tabs (Popup)
+  'tab.dashboard': 'Dashboard',
+  'tab.settings': 'Settings',
+
+  // Tabs (SidePanel)
+  'tab.creators': 'Creators',
+  'tab.invite': 'Invite',
+  'tab.listing': 'Listing',
+  'tab.monitor': 'Monitor',
+
+  // Dashboard
+  'dashboard.trial_mode': 'Trial Mode — {remaining} free AI calls remaining',
+  'dashboard.trial_desc': "Try ShopPilot's AI features without any setup! Add your own API key in Settings for unlimited use.",
+  'dashboard.trial_ended': 'Trial ended — Add your API key to continue',
+  'dashboard.trial_setup': 'Pick any AI provider below (60 seconds to set up):',
+  'dashboard.trial_steps': 'Sign up → Create Key → Settings tab → Paste → Save',
+  'dashboard.invites_today': 'Invites Today',
+  'dashboard.ai_generations': 'AI Generations',
+  'dashboard.creators_saved': 'Creators Saved',
+  'dashboard.products_tracked': 'Products Tracked',
+  'dashboard.this_week': '📊 This Week',
+  'dashboard.total_invites': 'Total Invites',
+  'dashboard.total_ai': 'AI Generations',
+  'dashboard.avg_invites': 'Avg: {count} invites/day',
+  'dashboard.avg_ai': '{count} AI/day',
+  'dashboard.quick_actions': 'Quick Actions',
+  'dashboard.open_panel': 'Open Full Panel',
+  'dashboard.go_to_creators': 'Go to Find Creators',
+
+  // Settings — Subscription
+  'settings.subscription': 'Subscription',
+  'settings.plan_active': '{plan} Plan — Active',
+  'settings.renews': 'Renews: {date}',
+  'settings.deactivate': 'Deactivate License',
+  'settings.free_plan': 'Free Plan',
+  'settings.license_key': 'License Key',
+  'settings.license_placeholder': 'Paste your license key here',
+  'settings.activate': 'Activate',
+  'settings.get_pro': 'Get Pro ($19/mo) →',
+  'settings.get_business': 'Get Business ($49/mo) →',
+  'settings.license_activated': 'License activated! Plan: {plan}',
+  'settings.license_deactivated': 'License deactivated. You are now on the Free plan.',
+
+  // Settings — AI
+  'settings.trial_status': '🧪 Trial Mode: {remaining}/{total} free AI calls left',
+  'settings.trial_setup_hint': 'Set up your own key for unlimited AI calls. Pick any provider below:',
+  'settings.budget': '💰 Budget',
+  'settings.domestic': '🌏 国内',
+  'settings.global': '🌐 Global',
+  'settings.select_provider_hint': 'Select a provider below → Paste your API key → Save',
+  'settings.ai_provider': 'AI Provider',
+  'settings.model': 'Model',
+  'settings.api_url': 'API URL (OpenAI-compatible)',
+  'settings.api_key': '{provider} API Key',
+  'settings.api_key_placeholder': 'Your API key',
+  'settings.key_local': 'Your key stays local. We never send it to our servers.',
+  'settings.save_key': 'Save Key',
+  'settings.saving': 'Saving...',
+  'settings.key_configured': '✅ {provider} key configured · Model: {model}',
+  'settings.manage_keys': 'Manage keys:',
+
+  // Settings — Product
+  'settings.my_product': 'My Product',
+  'settings.product_hint': 'This info is automatically included in AI-generated invitations to make them more relevant.',
+  'settings.product_name': 'Product Name',
+  'settings.product_name_placeholder': 'e.g. Glow Serum, LED Desk Lamp...',
+  'settings.product_desc': 'One-line Description',
+  'settings.product_desc_placeholder': 'e.g. Vitamin C serum for brighter skin, 30ml',
+  'settings.commission_rate': 'Commission Rate',
+
+  // Settings — Tone
+  'settings.default_tone': 'Default Invitation Tone',
+  'tone.professional': 'Professional',
+  'tone.casual': 'Casual',
+  'tone.friendly': 'Friendly',
+
+  // Settings — Formspree
+  'settings.formspree_id': 'Formspree ID',
+  'settings.formspree_hint': 'Enable online feedback submission. Get a free form at',
+
+  // Settings — Language
+  'settings.language': 'Interface Language',
+  'lang.en': 'English',
+  'lang.zh': '中文',
+
+  // Referral
+  'referral.title': '🎁 Refer & Earn',
+  'referral.share_desc': 'Share your code. Each friend who joins gives you {credits} bonus AI credits (max {max}).',
+  'referral.copy_link': 'Copy Link',
+  'referral.referrals': 'Referrals',
+  'referral.bonus_credits': 'Bonus Credits',
+  'referral.code_applied': "✅ Friend's code applied: {code} — you got +{bonus} bonus credits!",
+  'referral.have_code': "Have a friend's code?",
+  'referral.apply': 'Apply',
+  'referral.apply_hint': 'Get {credits} free AI credits when you enter a friend\'s code',
+  'referral.own_code_error': "You can't use your own referral code!",
+  'referral.already_applied': 'You already used a referral code ({code}).',
+  'referral.invalid_format': 'Invalid referral code format. Codes look like SP-ABC234.',
+
+  // Upgrade
+  'upgrade.limit_reached': '{tier} Plan Limit Reached',
+  'upgrade.used': "You've used {current}/{limit} {label}.",
+  'upgrade.cta': 'Upgrade for higher limits and more features.',
+  'upgrade.compact': '⚠️ {current}/{limit} {label} used ({tier} plan).',
+  'upgrade.pro': 'Pro — $19/mo',
+  'upgrade.business': 'Business — $49/mo',
+  'upgrade.to_business': 'Upgrade to Business — $49/mo',
+  'upgrade.have_key': 'Already have a key?',
+  'upgrade.enter_key': 'Enter license key →',
+
+  // Limits
+  'limit.daily_invites': 'daily invites',
+  'limit.daily_ai': 'daily AI generations',
+  'limit.tracked_products': 'tracked products',
+  'limit.saved_creators': 'saved creators',
+  'limit.reached': '🚫 {label}: {current}/{limit} — limit reached ({tier}).',
+  'limit.approaching': '⚠️ {label}: {current}/{limit} — approaching limit ({tier})',
+
+  // Creators
+  'creators.title': 'Creators',
+  'creators.search_placeholder': 'Search by name, username...',
+  'creators.no_results': 'No creators found.',
+  'creators.followers': 'Followers',
+  'creators.gmv': 'GMV 30d',
+  'creators.items_sold': 'Items Sold',
+  'creators.invite': 'Invite',
+  'creators.batch_invite': 'Batch Invite Selected',
+  'creators.filters': 'Filters',
+  'creators.category': 'Category',
+  'creators.all_categories': 'All Categories',
+  'creators.follower_range': 'Follower Range',
+  'creators.gmv_range': 'GMV Range',
+
+  // Invite
+  'invite.title': 'AI Invite Generator',
+  'invite.select_creator': 'Select a creator to generate an invitation',
+  'invite.tone': 'Tone',
+  'invite.generate_btn': 'Generate Invite',
+  'invite.generating': 'Generating...',
+  'invite.copy_and_send': 'Copy & Send',
+  'invite.templates': 'Templates',
+  'invite.save_template': 'Save as Template',
+  'invite.template_name': 'Template Name',
+  'invite.no_templates': 'No saved templates yet.',
+
+  // Listing
+  'listing.title': 'AI Listing Generator',
+  'listing.product_info': 'Product Information',
+  'listing.product_info_placeholder': 'Describe your product (name, features, target audience...)',
+  'listing.competitor_url': 'Competitor URL (optional)',
+  'listing.competitor_url_placeholder': 'https://www.tiktok.com/...',
+  'listing.generate_btn': 'Generate Listing',
+  'listing.generating': 'Generating...',
+  'listing.title_label': 'Title',
+  'listing.description_label': 'Description',
+  'listing.bullet_points': 'Bullet Points',
+  'listing.seo_tags': 'SEO Tags',
+
+  // Monitor
+  'monitor.title': 'Competitor Monitor',
+  'monitor.add_product': 'Track New Product',
+  'monitor.url_placeholder': 'Paste TikTok product URL...',
+  'monitor.track_btn': 'Track',
+  'monitor.no_products': 'No products tracked yet.',
+  'monitor.price': 'Price',
+  'monitor.sales': 'Sales',
+  'monitor.rating': 'Rating',
+  'monitor.last_checked': 'Last checked',
+  'monitor.remove': 'Remove',
+  'monitor.price_history': 'Price History',
+} as const;
+
+export type TranslationKey = keyof typeof en;

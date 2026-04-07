@@ -1,0 +1,203 @@
+import type { TranslationKey } from './en';
+
+export const zh: Record<TranslationKey, string> = {
+  // Common
+  'app.name': 'ShopPilot',
+  'app.tagline': 'TikTok Shop 卖家工具',
+  'app.version': 'ShopPilot v0.6.1',
+  'common.save': '保存',
+  'common.cancel': '取消',
+  'common.delete': '删除',
+  'common.copy': '复制',
+  'common.copied': '✓ 已复制',
+  'common.loading': '加载中...',
+  'common.processing': '处理中...',
+  'common.upgrade': '升级',
+  'common.back': '返回',
+  'common.feedback': '反馈',
+  'common.search': '搜索',
+  'common.clear': '清除',
+  'common.apply': '应用',
+  'common.close': '关闭',
+  'common.generate': '生成',
+  'common.send': '发送',
+  'common.refresh': '刷新',
+  'common.select_all': '全选',
+  'common.deselect_all': '取消全选',
+
+  // Tiers
+  'tier.free': '免费版',
+  'tier.pro': '专业版',
+  'tier.business': '商业版',
+
+  // Tabs (Popup)
+  'tab.dashboard': '仪表盘',
+  'tab.settings': '设置',
+
+  // Tabs (SidePanel)
+  'tab.creators': '达人',
+  'tab.invite': '邀约',
+  'tab.listing': '文案',
+  'tab.monitor': '监控',
+
+  // Dashboard
+  'dashboard.trial_mode': '试用模式 — 还剩 {remaining} 次免费 AI 调用',
+  'dashboard.trial_desc': '无需任何设置即可试用 ShopPilot AI 功能！在设置中添加 API Key 可无限使用。',
+  'dashboard.trial_ended': '试用已结束 — 请添加 API Key 继续使用',
+  'dashboard.trial_setup': '选择以下任一 AI 服务商（60秒搞定）：',
+  'dashboard.trial_steps': '注册 → 创建 Key → 设置标签 → 粘贴 → 保存',
+  'dashboard.invites_today': '今日邀约',
+  'dashboard.ai_generations': 'AI 生成',
+  'dashboard.creators_saved': '已保存达人',
+  'dashboard.products_tracked': '监控商品',
+  'dashboard.this_week': '📊 本周数据',
+  'dashboard.total_invites': '总邀约数',
+  'dashboard.total_ai': 'AI 生成次数',
+  'dashboard.avg_invites': '日均: {count} 次邀约',
+  'dashboard.avg_ai': '{count} 次AI/天',
+  'dashboard.quick_actions': '快捷操作',
+  'dashboard.open_panel': '打开完整面板',
+  'dashboard.go_to_creators': '前往达人广场',
+
+  // Settings — Subscription
+  'settings.subscription': '订阅',
+  'settings.plan_active': '{plan} — 已激活',
+  'settings.renews': '续费日期: {date}',
+  'settings.deactivate': '取消激活',
+  'settings.free_plan': '免费版',
+  'settings.license_key': '许可证密钥',
+  'settings.license_placeholder': '粘贴您的许可证密钥',
+  'settings.activate': '激活',
+  'settings.get_pro': '获取专业版 ($19/月) →',
+  'settings.get_business': '获取商业版 ($49/月) →',
+  'settings.license_activated': '许可证已激活！计划: {plan}',
+  'settings.license_deactivated': '许可证已取消。已切换至免费版。',
+
+  // Settings — AI
+  'settings.trial_status': '🧪 试用模式: 还剩 {remaining}/{total} 次免费 AI 调用',
+  'settings.trial_setup_hint': '设置自己的 Key 即可无限使用 AI。选择以下任一服务商：',
+  'settings.budget': '💰 低成本',
+  'settings.domestic': '🌏 国内',
+  'settings.global': '🌐 国际',
+  'settings.select_provider_hint': '选择服务商 → 粘贴 API Key → 保存',
+  'settings.ai_provider': 'AI 服务商',
+  'settings.model': '模型',
+  'settings.api_url': 'API 地址 (OpenAI 兼容)',
+  'settings.api_key': '{provider} API Key',
+  'settings.api_key_placeholder': '您的 API Key',
+  'settings.key_local': '密钥仅存储在本地，我们从不发送到服务器。',
+  'settings.save_key': '保存密钥',
+  'settings.saving': '保存中...',
+  'settings.key_configured': '✅ {provider} 密钥已配置 · 模型: {model}',
+  'settings.manage_keys': '管理密钥:',
+
+  // Settings — Product
+  'settings.my_product': '我的商品',
+  'settings.product_hint': '此信息会自动加入 AI 生成的邀约中，让邀约更有针对性。',
+  'settings.product_name': '商品名称',
+  'settings.product_name_placeholder': '如: 美白精华液、LED 台灯...',
+  'settings.product_desc': '一句话描述',
+  'settings.product_desc_placeholder': '如: 维C美白精华，30ml，适合敏感肌',
+  'settings.commission_rate': '佣金比例',
+
+  // Settings — Tone
+  'settings.default_tone': '默认邀约语气',
+  'tone.professional': '专业',
+  'tone.casual': '轻松',
+  'tone.friendly': '友好',
+
+  // Settings — Formspree
+  'settings.formspree_id': 'Formspree ID',
+  'settings.formspree_hint': '启用在线反馈提交。免费表单请访问',
+
+  // Settings — Language
+  'settings.language': '界面语言',
+  'lang.en': 'English',
+  'lang.zh': '中文',
+
+  // Referral
+  'referral.title': '🎁 邀请好友',
+  'referral.share_desc': '分享你的邀请码，每邀请一位好友可获得 {credits} 次额外 AI 调用（最多 {max} 次）。',
+  'referral.copy_link': '复制链接',
+  'referral.referrals': '已邀请',
+  'referral.bonus_credits': '额外次数',
+  'referral.code_applied': '✅ 已使用好友邀请码: {code} — 获得 +{bonus} 次额外调用！',
+  'referral.have_code': '有好友的邀请码？',
+  'referral.apply': '使用',
+  'referral.apply_hint': '输入好友邀请码可获得 {credits} 次免费 AI 调用',
+  'referral.own_code_error': '不能使用自己的邀请码！',
+  'referral.already_applied': '你已经使用过邀请码了（{code}）。',
+  'referral.invalid_format': '邀请码格式无效。格式如: SP-ABC234。',
+
+  // Upgrade
+  'upgrade.limit_reached': '{tier} 额度已用完',
+  'upgrade.used': '已使用 {current}/{limit} {label}。',
+  'upgrade.cta': '升级以获得更高额度和更多功能。',
+  'upgrade.compact': '⚠️ {current}/{limit} {label} 已使用（{tier}）。',
+  'upgrade.pro': '专业版 — $19/月',
+  'upgrade.business': '商业版 — $49/月',
+  'upgrade.to_business': '升级至商业版 — $49/月',
+  'upgrade.have_key': '已有密钥？',
+  'upgrade.enter_key': '输入许可证密钥 →',
+
+  // Limits
+  'limit.daily_invites': '每日邀约',
+  'limit.daily_ai': '每日 AI 生成',
+  'limit.tracked_products': '监控商品',
+  'limit.saved_creators': '已保存达人',
+  'limit.reached': '🚫 {label}: {current}/{limit} — 已达上限（{tier}）。',
+  'limit.approaching': '⚠️ {label}: {current}/{limit} — 接近上限（{tier}）',
+
+  // Creators
+  'creators.title': '达人列表',
+  'creators.search_placeholder': '搜索用户名、昵称...',
+  'creators.no_results': '未找到达人。',
+  'creators.followers': '粉丝数',
+  'creators.gmv': '30天GMV',
+  'creators.items_sold': '销量',
+  'creators.invite': '邀约',
+  'creators.batch_invite': '批量邀约已选',
+  'creators.filters': '筛选',
+  'creators.category': '类目',
+  'creators.all_categories': '全部类目',
+  'creators.follower_range': '粉丝范围',
+  'creators.gmv_range': 'GMV 范围',
+
+  // Invite
+  'invite.title': 'AI 邀约生成器',
+  'invite.select_creator': '选择达人以生成邀约',
+  'invite.tone': '语气',
+  'invite.generate_btn': '生成邀约',
+  'invite.generating': '生成中...',
+  'invite.copy_and_send': '复制并发送',
+  'invite.templates': '模板',
+  'invite.save_template': '保存为模板',
+  'invite.template_name': '模板名称',
+  'invite.no_templates': '暂无已保存的模板。',
+
+  // Listing
+  'listing.title': 'AI 商品文案生成器',
+  'listing.product_info': '商品信息',
+  'listing.product_info_placeholder': '描述你的商品（名称、特点、目标人群...）',
+  'listing.competitor_url': '竞品链接（可选）',
+  'listing.competitor_url_placeholder': 'https://www.tiktok.com/...',
+  'listing.generate_btn': '生成文案',
+  'listing.generating': '生成中...',
+  'listing.title_label': '标题',
+  'listing.description_label': '描述',
+  'listing.bullet_points': '卖点',
+  'listing.seo_tags': 'SEO 标签',
+
+  // Monitor
+  'monitor.title': '竞品监控',
+  'monitor.add_product': '添加监控商品',
+  'monitor.url_placeholder': '粘贴 TikTok 商品链接...',
+  'monitor.track_btn': '开始监控',
+  'monitor.no_products': '暂无监控商品。',
+  'monitor.price': '价格',
+  'monitor.sales': '销量',
+  'monitor.rating': '评分',
+  'monitor.last_checked': '最近检查',
+  'monitor.remove': '移除',
+  'monitor.price_history': '价格走势',
+};

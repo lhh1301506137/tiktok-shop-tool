@@ -3,8 +3,10 @@ import { UserSettings, UsageStats, AIProvider } from '@/types';
 import { DashboardTab } from './DashboardTab';
 import { SettingsTab } from './SettingsTab';
 import { FeedbackWidget } from '@/components/FeedbackWidget';
+import { I18nContext, useI18n, SupportedLang } from '@/i18n';
 
-export function PopupApp() {
+function PopupInner() {
+  const { t } = useI18n();
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [activeTab, setActiveTab] = useState<'home' | 'settings'>('home');
@@ -16,7 +18,6 @@ export function PopupApp() {
     loadData();
   }, []);
 
-  // Helper: sendMessage with retry for Service Worker cold-start
   async function safeSendMessage(msg: any, retries = 2): Promise<any> {
     for (let i = 0; i <= retries; i++) {
       try {
@@ -24,7 +25,6 @@ export function PopupApp() {
         return res;
       } catch (err) {
         if (i < retries) {
-          // Service Worker may still be waking up — wait and retry
           await new Promise(r => setTimeout(r, 300));
         } else {
           console.error('[ShopPilot] sendMessage failed:', err);
@@ -40,7 +40,6 @@ export function PopupApp() {
       setSettings(settingsResult);
       setApiKeyInput(settingsResult.apiKey || '');
     } catch {
-      // Fallback: read settings directly from storage
       const stored = await chrome.storage.local.get('settings');
       const fallback = { tier: 'free' as const, defaultCommission: 15, defaultTone: 'professional' as const, language: 'en', theme: 'light' as const, aiProvider: 'deepseek' as AIProvider, ...stored.settings };
       setSettings(fallback);
@@ -66,7 +65,6 @@ export function PopupApp() {
         payload: { apiKey: apiKeyInput },
       });
     } catch {
-      // Fallback: write directly to storage
       const stored = await chrome.storage.local.get('settings');
       await chrome.storage.local.set({ settings: { ...stored.settings, apiKey: apiKeyInput } });
     }
@@ -81,7 +79,6 @@ export function PopupApp() {
         payload: partial,
       });
     } catch {
-      // Fallback: write directly to storage
       const stored = await chrome.storage.local.get('settings');
       await chrome.storage.local.set({ settings: { ...stored.settings, ...partial } });
     }
@@ -101,12 +98,12 @@ export function PopupApp() {
         <div className="flex items-center gap-3">
           <span className="text-2xl">🚀</span>
           <div>
-            <h1 className="text-white font-bold text-lg">ShopPilot</h1>
-            <p className="text-white/80 text-xs">TikTok Shop Seller Tool</p>
+            <h1 className="text-white font-bold text-lg">{t('app.name')}</h1>
+            <p className="text-white/80 text-xs">{t('app.tagline')}</p>
           </div>
           <div className="ml-auto">
             <span className={`badge ${settings?.tier === 'free' ? 'bg-white/20 text-white' : 'bg-yellow-400 text-yellow-900'}`}>
-              {settings?.tier?.toUpperCase() || 'FREE'}
+              {t(`tier.${settings?.tier || 'free'}` as any)}
             </span>
           </div>
         </div>
@@ -122,7 +119,7 @@ export function PopupApp() {
               : 'text-tiktok-gray-500 hover:text-tiktok-gray-700'
           }`}
         >
-          Dashboard
+          {t('tab.dashboard')}
         </button>
         <button
           onClick={() => setActiveTab('settings')}
@@ -132,7 +129,7 @@ export function PopupApp() {
               : 'text-tiktok-gray-500 hover:text-tiktok-gray-700'
           }`}
         >
-          Settings
+          {t('tab.settings')}
         </button>
       </div>
 
@@ -162,13 +159,39 @@ export function PopupApp() {
       {/* Footer */}
       <div className="border-t border-tiktok-gray-100 p-3 text-center">
         <p className="text-xs text-tiktok-gray-400">
-          ShopPilot v0.6.0 |{' '}
+          {t('app.version')} |{' '}
           <button onClick={() => setShowFeedback(!showFeedback)} className="text-brand-primary hover:underline">
-            {showFeedback ? 'Back' : 'Feedback'}
+            {showFeedback ? t('common.back') : t('common.feedback')}
           </button>{' '}
-          | <a href="https://shoppilot.pro/#pricing" target="_blank" rel="noopener" className="text-brand-primary hover:underline">Upgrade</a>
+          | <a href="https://shoppilot.pro/#pricing" target="_blank" rel="noopener" className="text-brand-primary hover:underline">{t('common.upgrade')}</a>
         </p>
       </div>
     </div>
+  );
+}
+
+export function PopupApp() {
+  const [lang, setLang] = useState<SupportedLang>('en');
+
+  useEffect(() => {
+    chrome.storage.local.get('settings').then((result) => {
+      const l = result.settings?.language;
+      if (l === 'zh' || l === 'en') setLang(l);
+    });
+
+    // Listen for language changes
+    const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+      if (changes.settings?.newValue?.language) {
+        setLang(changes.settings.newValue.language);
+      }
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
+  }, []);
+
+  return (
+    <I18nContext.Provider value={lang}>
+      <PopupInner />
+    </I18nContext.Provider>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserSettings, AIProvider, AI_PROVIDERS, LicenseInfo, LS_CONFIG, TRIAL_AI_LIMIT } from '@/types';
 import { ReferralSection } from '@/components/ReferralSection';
+import { useI18n } from '@/i18n';
 
 interface SettingsTabProps {
   settings: UserSettings | null;
@@ -21,6 +22,7 @@ export function SettingsTab({
   onSaveApiKey,
   onUpdateSetting,
 }: SettingsTabProps) {
+  const { t } = useI18n();
   const currentProvider = settings?.aiProvider || 'deepseek';
   const providerConfig = AI_PROVIDERS[currentProvider];
   const hasApiKey = !!settings?.apiKey;
@@ -33,7 +35,6 @@ export function SettingsTab({
   const [licenseSuccess, setLicenseSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load current license
     chrome.runtime.sendMessage({ type: 'GET_LICENSE' }).then((lic: LicenseInfo | null) => {
       setLicense(lic);
     }).catch(() => {});
@@ -54,7 +55,7 @@ export function SettingsTab({
       if (result?.success && result?.license) {
         setLicense(result.license);
         setLicenseKeyInput('');
-        setLicenseSuccess(`License activated! Plan: ${result.license.variantName || result.license.tier}`);
+        setLicenseSuccess(t('settings.license_activated', { plan: result.license.variantName || result.license.tier }));
       } else {
         setLicenseError(result?.error || 'Failed to activate license');
       }
@@ -73,7 +74,7 @@ export function SettingsTab({
       const result = await chrome.runtime.sendMessage({ type: 'DEACTIVATE_LICENSE' });
       if (result?.success) {
         setLicense(null);
-        setLicenseSuccess('License deactivated. You are now on the Free plan.');
+        setLicenseSuccess(t('settings.license_deactivated'));
       } else {
         setLicenseError(result?.error || 'Failed to deactivate');
       }
@@ -86,22 +87,39 @@ export function SettingsTab({
 
   return (
     <div className="space-y-4">
+      {/* ---- Language Switcher ---- */}
+      <div>
+        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
+          {t('settings.language')}
+        </label>
+        <select
+          value={settings?.language || 'en'}
+          onChange={e => onUpdateSetting({ language: e.target.value as 'en' | 'zh' })}
+          className="input-field text-sm"
+        >
+          <option value="en">{t('lang.en')}</option>
+          <option value="zh">{t('lang.zh')}</option>
+        </select>
+      </div>
+
+      <hr className="border-tiktok-gray-100" />
+
       {/* ---- Subscription & License ---- */}
       <div className="border border-tiktok-gray-200 rounded-lg p-3">
-        <h3 className="text-sm font-semibold text-tiktok-gray-700 mb-2">Subscription</h3>
+        <h3 className="text-sm font-semibold text-tiktok-gray-700 mb-2">{t('settings.subscription')}</h3>
 
         {license ? (
           <div className="space-y-2">
             <div className="bg-green-50 border border-green-200 rounded-lg p-2.5">
               <p className="text-green-800 text-xs font-semibold">
-                ✅ {license.variantName || license.tier.toUpperCase()} Plan — Active
+                ✅ {t('settings.plan_active', { plan: license.variantName || license.tier.toUpperCase() })}
               </p>
               {license.customerEmail && (
                 <p className="text-green-700 text-[10px] mt-0.5">{license.customerEmail}</p>
               )}
               {license.expiresAt && (
                 <p className="text-green-600 text-[10px] mt-0.5">
-                  Renews: {new Date(license.expiresAt).toLocaleDateString()}
+                  {t('settings.renews', { date: new Date(license.expiresAt).toLocaleDateString() })}
                 </p>
               )}
             </div>
@@ -110,26 +128,26 @@ export function SettingsTab({
               disabled={licenseLoading}
               className="text-xs text-red-500 hover:underline"
             >
-              {licenseLoading ? 'Processing...' : 'Deactivate License'}
+              {licenseLoading ? t('common.processing') : t('settings.deactivate')}
             </button>
           </div>
         ) : (
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-xs font-medium text-tiktok-gray-500 bg-tiktok-gray-100 rounded px-2 py-0.5">
-                Free Plan
+                {t('settings.free_plan')}
               </span>
             </div>
             <div>
               <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">
-                License Key
+                {t('settings.license_key')}
               </label>
               <div className="flex gap-1.5">
                 <input
                   type="text"
                   value={licenseKeyInput}
                   onChange={e => setLicenseKeyInput(e.target.value)}
-                  placeholder="Paste your license key here"
+                  placeholder={t('settings.license_placeholder')}
                   className="input-field text-xs flex-1"
                   onKeyDown={e => e.key === 'Enter' && handleActivateLicense()}
                 />
@@ -138,37 +156,23 @@ export function SettingsTab({
                   disabled={licenseLoading || !licenseKeyInput.trim()}
                   className="btn-primary text-xs px-3 shrink-0"
                 >
-                  {licenseLoading ? '...' : 'Activate'}
+                  {licenseLoading ? '...' : t('settings.activate')}
                 </button>
               </div>
             </div>
             <div className="flex gap-2 mt-1">
-              <a
-                href={LS_CONFIG.proCheckoutUrl}
-                target="_blank"
-                rel="noopener"
-                className="text-[11px] text-brand-primary hover:underline font-medium"
-              >
-                Get Pro ($19/mo) →
+              <a href={LS_CONFIG.proCheckoutUrl} target="_blank" rel="noopener" className="text-[11px] text-brand-primary hover:underline font-medium">
+                {t('settings.get_pro')}
               </a>
-              <a
-                href={LS_CONFIG.businessCheckoutUrl}
-                target="_blank"
-                rel="noopener"
-                className="text-[11px] text-brand-primary hover:underline font-medium"
-              >
-                Get Business ($49/mo) →
+              <a href={LS_CONFIG.businessCheckoutUrl} target="_blank" rel="noopener" className="text-[11px] text-brand-primary hover:underline font-medium">
+                {t('settings.get_business')}
               </a>
             </div>
           </div>
         )}
 
-        {licenseError && (
-          <p className="text-red-600 text-[11px] mt-1.5">❌ {licenseError}</p>
-        )}
-        {licenseSuccess && (
-          <p className="text-green-600 text-[11px] mt-1.5">✅ {licenseSuccess}</p>
-        )}
+        {licenseError && <p className="text-red-600 text-[11px] mt-1.5">❌ {licenseError}</p>}
+        {licenseSuccess && <p className="text-green-600 text-[11px] mt-1.5">✅ {licenseSuccess}</p>}
       </div>
 
       {/* ---- Referral ---- */}
@@ -178,37 +182,30 @@ export function SettingsTab({
 
       {/* ---- AI Configuration ---- */}
 
-      {/* Trial Status (when no key configured) */}
       {!hasApiKey && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">
           <p className="text-blue-800 text-xs font-semibold mb-2">
-            🧪 Trial Mode: {TRIAL_AI_LIMIT - trialUsed}/{TRIAL_AI_LIMIT} free AI calls left
+            {t('settings.trial_status', { remaining: TRIAL_AI_LIMIT - trialUsed, total: TRIAL_AI_LIMIT })}
           </p>
           <p className="text-blue-700 text-[11px] mb-2">
-            Set up your own key for unlimited AI calls. Pick any provider below:
+            {t('settings.trial_setup_hint')}
           </p>
           <div className="text-[11px] text-blue-700 space-y-0.5">
-            <p>💰 <strong>Budget</strong>: <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" className="underline">DeepSeek</a> · <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" rel="noopener" className="underline">GLM 智谱</a></p>
-            <p>🌏 <strong>国内</strong>: <a href="https://platform.moonshot.cn/console/api-keys" target="_blank" rel="noopener" className="underline">Kimi</a> · <a href="https://platform.minimaxi.com/user-center/basic-information/interface-key" target="_blank" rel="noopener" className="underline">MiniMax</a></p>
-            <p>🌐 <strong>Global</strong>: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" className="underline">OpenAI</a> · <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" className="underline">Claude</a> · <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="underline">Gemini</a></p>
+            <p>{t('settings.budget')}: <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" className="underline">DeepSeek</a> · <a href="https://open.bigmodel.cn/usercenter/apikeys" target="_blank" rel="noopener" className="underline">GLM 智谱</a></p>
+            <p>{t('settings.domestic')}: <a href="https://platform.moonshot.cn/console/api-keys" target="_blank" rel="noopener" className="underline">Kimi</a> · <a href="https://platform.minimaxi.com/user-center/basic-information/interface-key" target="_blank" rel="noopener" className="underline">MiniMax</a></p>
+            <p>{t('settings.global')}: <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" className="underline">OpenAI</a> · <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" className="underline">Claude</a> · <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="underline">Gemini</a></p>
           </div>
           <p className="text-[10px] text-blue-600 mt-1.5">
-            Select a provider below → Paste your API key → Save
+            {t('settings.select_provider_hint')}
           </p>
         </div>
       )}
 
-      {/* AI Provider */}
       <div>
-        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-          AI Provider
-        </label>
+        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">{t('settings.ai_provider')}</label>
         <select
           value={currentProvider}
-          onChange={e => onUpdateSetting({
-            aiProvider: e.target.value as AIProvider,
-            aiModel: undefined,
-          })}
+          onChange={e => onUpdateSetting({ aiProvider: e.target.value as AIProvider, aiModel: undefined })}
           className="input-field text-sm"
         >
           {(Object.keys(AI_PROVIDERS) as AIProvider[]).map(key => (
@@ -217,12 +214,9 @@ export function SettingsTab({
         </select>
       </div>
 
-      {/* Model Selection */}
       {currentProvider !== 'custom' && providerConfig.models.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-            Model
-          </label>
+          <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">{t('settings.model')}</label>
           <select
             value={settings?.aiModel || providerConfig.defaultModel}
             onChange={e => onUpdateSetting({ aiModel: e.target.value })}
@@ -235,12 +229,9 @@ export function SettingsTab({
         </div>
       )}
 
-      {/* Custom API URL */}
       {currentProvider === 'custom' && (
         <div>
-          <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-            API URL (OpenAI-compatible)
-          </label>
+          <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">{t('settings.api_url')}</label>
           <input
             type="text"
             value={settings?.customApiUrl || ''}
@@ -251,39 +242,31 @@ export function SettingsTab({
         </div>
       )}
 
-      {/* API Key */}
       <div>
         <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-          {providerConfig.name} API Key
+          {t('settings.api_key', { provider: providerConfig.name })}
         </label>
         <input
           type="password"
           value={apiKeyInput}
           onChange={e => onApiKeyChange(e.target.value)}
-          placeholder={providerConfig.keyPrefix ? `${providerConfig.keyPrefix}...` : 'Your API key'}
+          placeholder={providerConfig.keyPrefix ? `${providerConfig.keyPrefix}...` : t('settings.api_key_placeholder')}
           className="input-field text-sm"
         />
-        <p className="text-xs text-tiktok-gray-400 mt-1">
-          Your key stays local. We never send it to our servers.
-        </p>
-        <button
-          onClick={onSaveApiKey}
-          disabled={saving}
-          className="btn-primary w-full text-sm mt-2"
-        >
-          {saving ? 'Saving...' : 'Save Key'}
+        <p className="text-xs text-tiktok-gray-400 mt-1">{t('settings.key_local')}</p>
+        <button onClick={onSaveApiKey} disabled={saving} className="btn-primary w-full text-sm mt-2">
+          {saving ? t('settings.saving') : t('settings.save_key')}
         </button>
       </div>
 
-      {/* Saved indicator */}
       {hasApiKey && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-2">
           <p className="text-green-700 text-xs">
-            ✅ {providerConfig.name} key configured &middot; Model: {settings?.aiModel || providerConfig.defaultModel}
+            {t('settings.key_configured', { provider: providerConfig.name, model: settings?.aiModel || providerConfig.defaultModel })}
           </p>
           {providerConfig.keyUrl && (
             <p className="text-green-600 text-[10px] mt-1">
-              Manage keys: <a href={providerConfig.keyUrl} target="_blank" rel="noopener" className="underline">{providerConfig.name} Dashboard</a>
+              {t('settings.manage_keys')} <a href={providerConfig.keyUrl} target="_blank" rel="noopener" className="underline">{providerConfig.name} Dashboard</a>
             </p>
           )}
         </div>
@@ -291,44 +274,23 @@ export function SettingsTab({
 
       <hr className="border-tiktok-gray-100" />
 
-      {/* My Product — injected into AI invites */}
+      {/* My Product */}
       <div>
-        <h3 className="text-sm font-semibold text-tiktok-gray-700 mb-2">My Product</h3>
-        <p className="text-[11px] text-tiktok-gray-400 mb-3">
-          This info is automatically included in AI-generated invitations to make them more relevant.
-        </p>
+        <h3 className="text-sm font-semibold text-tiktok-gray-700 mb-2">{t('settings.my_product')}</h3>
+        <p className="text-[11px] text-tiktok-gray-400 mb-3">{t('settings.product_hint')}</p>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">Product Name</label>
-            <input
-              type="text"
-              value={settings?.productName || ''}
-              onChange={e => onUpdateSetting({ productName: e.target.value || undefined })}
-              placeholder="e.g. Glow Serum, LED Desk Lamp..."
-              className="input-field text-sm"
-            />
+            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">{t('settings.product_name')}</label>
+            <input type="text" value={settings?.productName || ''} onChange={e => onUpdateSetting({ productName: e.target.value || undefined })} placeholder={t('settings.product_name_placeholder')} className="input-field text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">One-line Description</label>
-            <input
-              type="text"
-              value={settings?.productDescription || ''}
-              onChange={e => onUpdateSetting({ productDescription: e.target.value || undefined })}
-              placeholder="e.g. Vitamin C serum for brighter skin, 30ml"
-              className="input-field text-sm"
-            />
+            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">{t('settings.product_desc')}</label>
+            <input type="text" value={settings?.productDescription || ''} onChange={e => onUpdateSetting({ productDescription: e.target.value || undefined })} placeholder={t('settings.product_desc_placeholder')} className="input-field text-sm" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">Commission Rate</label>
+            <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">{t('settings.commission_rate')}</label>
             <div className="flex items-center gap-2">
-              <input
-                type="number"
-                min="1"
-                max="80"
-                value={settings?.commissionRate || settings?.defaultCommission || 15}
-                onChange={e => onUpdateSetting({ commissionRate: parseInt(e.target.value), defaultCommission: parseInt(e.target.value) })}
-                className="input-field text-sm w-20"
-              />
+              <input type="number" min="1" max="80" value={settings?.commissionRate || settings?.defaultCommission || 15} onChange={e => onUpdateSetting({ commissionRate: parseInt(e.target.value), defaultCommission: parseInt(e.target.value) })} className="input-field text-sm w-20" />
               <span className="text-sm text-tiktok-gray-500">%</span>
             </div>
           </div>
@@ -337,38 +299,26 @@ export function SettingsTab({
 
       <hr className="border-tiktok-gray-100" />
 
-      {/* Invitation Tone */}
+      {/* Tone */}
       <div>
-        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-          Default Invitation Tone
-        </label>
-        <select
-          value={settings?.defaultTone || 'professional'}
-          onChange={e => onUpdateSetting({ defaultTone: e.target.value as any })}
-          className="input-field text-sm"
-        >
-          <option value="professional">Professional</option>
-          <option value="casual">Casual</option>
-          <option value="friendly">Friendly</option>
+        <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">{t('settings.default_tone')}</label>
+        <select value={settings?.defaultTone || 'professional'} onChange={e => onUpdateSetting({ defaultTone: e.target.value as any })} className="input-field text-sm">
+          <option value="professional">{t('tone.professional')}</option>
+          <option value="casual">{t('tone.casual')}</option>
+          <option value="friendly">{t('tone.friendly')}</option>
         </select>
       </div>
 
       <hr className="border-tiktok-gray-100" />
 
-      {/* Formspree Integration */}
+      {/* Formspree */}
       <div>
         <label className="block text-sm font-medium text-tiktok-gray-700 mb-1">
-          Formspree ID <span className="text-tiktok-gray-400 font-normal">(optional)</span>
+          {t('settings.formspree_id')} <span className="text-tiktok-gray-400 font-normal">(optional)</span>
         </label>
-        <input
-          type="text"
-          value={settings?.formspreeId || ''}
-          onChange={e => onUpdateSetting({ formspreeId: e.target.value.trim() || undefined })}
-          placeholder="e.g. xyzabcde"
-          className="input-field text-sm"
-        />
+        <input type="text" value={settings?.formspreeId || ''} onChange={e => onUpdateSetting({ formspreeId: e.target.value.trim() || undefined })} placeholder="e.g. xyzabcde" className="input-field text-sm" />
         <p className="text-xs text-tiktok-gray-400 mt-1">
-          Enable online feedback submission. Get a free form at{' '}
+          {t('settings.formspree_hint')}{' '}
           <a href="https://formspree.io" target="_blank" rel="noopener" className="underline">formspree.io</a>
         </p>
       </div>

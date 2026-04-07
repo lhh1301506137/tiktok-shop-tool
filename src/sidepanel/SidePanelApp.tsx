@@ -6,6 +6,7 @@ import { CreatorsTab } from '@/components/CreatorsTab';
 import { InviteTab } from '@/components/InviteTab';
 import { ListingTab } from '@/components/ListingTab';
 import { MonitorTab } from '@/components/MonitorTab';
+import { useI18n } from '@/i18n';
 
 type Tab = 'creators' | 'invite' | 'listing' | 'monitor';
 type Tone = 'professional' | 'friendly' | 'casual';
@@ -20,6 +21,7 @@ export function SidePanelApp() {
   const [aiProvider, setAiProvider] = useState<AIProvider>('deepseek');
   const [aiModel, setAiModel] = useState('');
   const [showModelPicker, setShowModelPicker] = useState(false);
+  const { t } = useI18n();
   const { showToast, ToastElement } = useToast();
 
   // Load AI settings
@@ -209,10 +211,10 @@ export function SidePanelApp() {
   }
 
   const tabs: { key: Tab; label: string; icon: string }[] = [
-    { key: 'creators', label: 'Creators', icon: '👥' },
-    { key: 'invite', label: 'Invite', icon: '✉️' },
-    { key: 'listing', label: 'Listing AI', icon: '✨' },
-    { key: 'monitor', label: 'Monitor', icon: '📊' },
+    { key: 'creators', label: t('tab.creators'), icon: '👥' },
+    { key: 'invite', label: t('tab.invite'), icon: '✉️' },
+    { key: 'listing', label: t('tab.listing'), icon: '✨' },
+    { key: 'monitor', label: t('tab.monitor'), icon: '📊' },
   ];
 
   return (

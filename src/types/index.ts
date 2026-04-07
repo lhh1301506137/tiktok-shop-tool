@@ -257,6 +257,29 @@ export interface DailySnapshot {
   productsTracked: number;   // cumulative count at end of day
 }
 
+/** LemonSqueezy license info */
+export interface LicenseInfo {
+  key: string;
+  instanceId: string;         // returned by LS on activation
+  status: 'active' | 'inactive' | 'expired' | 'disabled';
+  tier: SubscriptionTier;     // derived from LS variant/product
+  customerName?: string;
+  customerEmail?: string;
+  validatedAt: number;        // last successful validation timestamp
+  expiresAt?: number;         // subscription expiry (Unix ms), undefined = lifetime
+  variantName?: string;       // "Pro" or "Business"
+}
+
+// LemonSqueezy configuration — replace with real values when LS account is set up
+export const LS_CONFIG = {
+  // Checkout URLs (replace with your real LemonSqueezy checkout links)
+  proCheckoutUrl: 'https://shoppilot.lemonsqueezy.com/checkout/buy/pro',
+  businessCheckoutUrl: 'https://shoppilot.lemonsqueezy.com/checkout/buy/business',
+  // Product variant IDs (replace when products are created in LS dashboard)
+  proVariantId: '',       // TODO: fill after creating LS products
+  businessVariantId: '',  // TODO: fill after creating LS products
+};
+
 /** Trial mode constants */
 export const TRIAL_AI_LIMIT = 5;  // Free AI calls without API key
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { LS_CONFIG } from '@/types';
 
 const UPGRADE_URL = 'https://shoppilot.pro/#pricing';
 
@@ -17,7 +18,16 @@ const LIMIT_LABELS: Record<string, string> = {
   maxSavedCreators: 'saved creators',
 };
 
+function handleUpgradePro() {
+  chrome.tabs.create({ url: LS_CONFIG.proCheckoutUrl || UPGRADE_URL });
+}
+
+function handleUpgradeBusiness() {
+  chrome.tabs.create({ url: LS_CONFIG.businessCheckoutUrl || UPGRADE_URL });
+}
+
 function handleUpgrade() {
+  // Default: open pricing page (user can pick tier)
   chrome.tabs.create({ url: UPGRADE_URL });
 }
 
@@ -45,11 +55,34 @@ export function UpgradePrompt({ tier, limitType, current, limit, compact }: Upgr
       </h3>
       <p className="text-xs text-tiktok-gray-600 mb-3">
         You've used {current}/{limit} {label}.
-        Upgrade to Pro or Business for higher limits.
+        Upgrade for higher limits and more features.
       </p>
-      <button onClick={handleUpgrade} className="btn-primary text-xs !py-1.5 !px-4">
-        Upgrade Plan
-      </button>
+      <div className="flex gap-2 justify-center">
+        {tier === 'free' && (
+          <>
+            <button onClick={handleUpgradePro} className="btn-primary text-xs !py-1.5 !px-4">
+              Pro — $19/mo
+            </button>
+            <button onClick={handleUpgradeBusiness} className="bg-tiktok-gray-800 hover:bg-tiktok-gray-900 text-white text-xs rounded-lg !py-1.5 !px-4 transition-colors">
+              Business — $49/mo
+            </button>
+          </>
+        )}
+        {tier === 'pro' && (
+          <button onClick={handleUpgradeBusiness} className="btn-primary text-xs !py-1.5 !px-4">
+            Upgrade to Business — $49/mo
+          </button>
+        )}
+      </div>
+      <p className="text-[10px] text-tiktok-gray-400 mt-2">
+        Already have a key?{' '}
+        <span className="underline cursor-pointer" onClick={() => {
+          // Navigate to settings tab — dispatch custom event
+          window.dispatchEvent(new CustomEvent('shoppilot:goto-settings'));
+        }}>
+          Enter license key →
+        </span>
+      </p>
     </div>
   );
 }
@@ -77,7 +110,7 @@ export function UsageWarning({ label, current, limit, tier }: {
         ? <>🚫 {label}: {current}/{limit} — limit reached ({tier.toUpperCase()}).{' '}
             <button onClick={handleUpgrade} className="font-semibold underline">Upgrade</button>
           </>
-        : `⚠️ ${label}: ${current}/{limit} — approaching limit (${tier.toUpperCase()})`
+        : `⚠️ ${label}: ${current}/${limit} — approaching limit (${tier.toUpperCase()})`
       }
     </div>
   );

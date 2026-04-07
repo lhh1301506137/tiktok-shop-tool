@@ -23,10 +23,14 @@ import {
   checkTrackedProductLimit,
   checkSavedCreatorLimit,
   saveCreators,
+  getLicense,
+  saveLicense,
+  clearLicense,
   LimitCheckResult,
 } from '@/utils/storage';
 import { generateInviteMessage, generateListingCopy } from '@/services/ai';
 import { startBatchInvite, stopBatchInvite, getQueueState, recoverQueue } from '@/services/inviteQueue';
+import { activateLicense as activateLicenseFn, validateLicense, deactivateLicense as deactivateLicenseFn, isLicenseValid } from '@/services/license';
 
 // ---- Tier Limit Helpers ----
 
@@ -234,6 +238,34 @@ async function handleMessage(message: MessageType) {
       return { invites, aiGens, products, creators };
     }
 
+    case 'ACTIVATE_LICENSE' as any: {
+      const licenseKey = (message as any).payload?.licenseKey;
+      if (!licenseKey) return { success: false, error: 'No license key provided' };
+
+      const result = await activateLicenseFn(licenseKey);
+      if (result.success && result.license) {
+        await saveLicense(result.license);
+        console.log('[ShopPilot] License activated:', result.license.tier, result.license.variantName);
+      }
+      return result;
+    }
+
+    case 'DEACTIVATE_LICENSE' as any: {
+      const license = await getLicense();
+      if (!license) return { success: false, error: 'No active license' };
+
+      const deactivateResult = await deactivateLicenseFn(license.key, license.instanceId);
+      if (deactivateResult.success) {
+        await clearLicense();
+        console.log('[ShopPilot] License deactivated');
+      }
+      return deactivateResult;
+    }
+
+    case 'GET_LICENSE' as any: {
+      return await getLicense();
+    }
+
     default:
       return { error: 'Unknown message type' };
   }
@@ -368,6 +400,26 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     console.log('[ShopPilot] Price check alarm triggered');
     await refreshAllTrackedProducts();
   }
+
+  if (alarm.name === 'license-revalidate') {
+    console.log('[ShopPilot] License revalidation alarm');
+    const license = await getLicense();
+    if (license && license.key && license.instanceId) {
+      const result = await validateLicense(license.key, license.instanceId);
+      if (result.success && result.license) {
+        await saveLicense(result.license);
+        console.log('[ShopPilot] License revalidated successfully:', result.license.tier);
+      } else {
+        // Check grace period — don't immediately downgrade
+        if (!isLicenseValid(license)) {
+          console.warn('[ShopPilot] License invalid after grace period, downgrading to free');
+          await updateSettings({ tier: 'free' });
+        } else {
+          console.warn('[ShopPilot] License validation failed, still in grace period:', result.error);
+        }
+      }
+    }
+  }
 });
 
 // ---- Install/Update ----
@@ -385,6 +437,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
       theme: 'light',
     });
   }
+
+  // Set up license revalidation alarm (every 24 hours)
+  chrome.alarms.create('license-revalidate', {
+    delayInMinutes: 60,         // first check after 1 hour
+    periodInMinutes: 24 * 60,   // then every 24 hours
+  });
 });
 
 // ---- Recover interrupted batch queue on SW restart ----

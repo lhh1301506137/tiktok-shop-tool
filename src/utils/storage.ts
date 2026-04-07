@@ -1,4 +1,4 @@
-import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, InviteTemplate, DailySnapshot, TIER_LIMITS, TRIAL_AI_LIMIT } from '@/types';
+import { UserSettings, UsageStats, Creator, TrackedProduct, SubscriptionTier, AIHistoryEntry, InviteTemplate, DailySnapshot, LicenseInfo, TIER_LIMITS, TRIAL_AI_LIMIT } from '@/types';
 
 const DEFAULT_SETTINGS: UserSettings = {
   tier: 'free' as SubscriptionTier,
@@ -65,13 +65,21 @@ export async function getUsage(): Promise<UsageStats> {
   return usage;
 }
 
-export async function incrementUsage(
+/** Serialize incrementUsage calls to prevent lost updates */
+let _usageLock: Promise<UsageStats> = Promise.resolve({} as UsageStats);
+
+export function incrementUsage(
   field: 'invitesSentToday' | 'aiGenerationsToday' | 'creatorsScraped' | 'productsTracked'
 ): Promise<UsageStats> {
-  const usage = await getUsage();
-  usage[field] += 1;
-  await chrome.storage.local.set({ usage });
-  return usage;
+  _usageLock = _usageLock
+    .catch(() => {})
+    .then(async () => {
+      const usage = await getUsage();
+      usage[field] += 1;
+      await chrome.storage.local.set({ usage });
+      return usage;
+    });
+  return _usageLock;
 }
 
 // ============================================================
@@ -508,4 +516,22 @@ export async function getWeeklyStats(): Promise<WeeklyStats> {
     avgInvitesPerDay: Math.round(totalInvites / activeDays * 10) / 10,
     avgAiPerDay: Math.round(totalAiGenerations / activeDays * 10) / 10,
   };
+}
+
+// ---- License Management ----
+
+export async function getLicense(): Promise<LicenseInfo | null> {
+  const result = await chrome.storage.local.get('license');
+  return result.license || null;
+}
+
+export async function saveLicense(license: LicenseInfo): Promise<void> {
+  await chrome.storage.local.set({ license });
+  // Also update tier in settings to match license
+  await updateSettings({ tier: license.tier });
+}
+
+export async function clearLicense(): Promise<void> {
+  await chrome.storage.local.remove('license');
+  await updateSettings({ tier: 'free' });
 }

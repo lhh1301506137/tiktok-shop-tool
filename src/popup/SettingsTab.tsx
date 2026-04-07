@@ -1,5 +1,5 @@
-import React from 'react';
-import { UserSettings, AIProvider, AI_PROVIDERS, TRIAL_AI_LIMIT } from '@/types';
+import React, { useEffect, useState } from 'react';
+import { UserSettings, AIProvider, AI_PROVIDERS, LicenseInfo, LS_CONFIG, TRIAL_AI_LIMIT } from '@/types';
 
 interface SettingsTabProps {
   settings: UserSettings | null;
@@ -24,8 +24,156 @@ export function SettingsTab({
   const providerConfig = AI_PROVIDERS[currentProvider];
   const hasApiKey = !!settings?.apiKey;
 
+  // License state
+  const [license, setLicense] = useState<LicenseInfo | null>(null);
+  const [licenseKeyInput, setLicenseKeyInput] = useState('');
+  const [licenseLoading, setLicenseLoading] = useState(false);
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+  const [licenseSuccess, setLicenseSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Load current license
+    chrome.runtime.sendMessage({ type: 'GET_LICENSE' }).then((lic: LicenseInfo | null) => {
+      setLicense(lic);
+    }).catch(() => {});
+  }, []);
+
+  async function handleActivateLicense() {
+    if (!licenseKeyInput.trim()) return;
+    setLicenseLoading(true);
+    setLicenseError(null);
+    setLicenseSuccess(null);
+
+    try {
+      const result = await chrome.runtime.sendMessage({
+        type: 'ACTIVATE_LICENSE',
+        payload: { licenseKey: licenseKeyInput.trim() },
+      });
+
+      if (result?.success && result?.license) {
+        setLicense(result.license);
+        setLicenseKeyInput('');
+        setLicenseSuccess(`License activated! Plan: ${result.license.variantName || result.license.tier}`);
+      } else {
+        setLicenseError(result?.error || 'Failed to activate license');
+      }
+    } catch (e) {
+      setLicenseError((e as Error).message);
+    } finally {
+      setLicenseLoading(false);
+    }
+  }
+
+  async function handleDeactivateLicense() {
+    setLicenseLoading(true);
+    setLicenseError(null);
+
+    try {
+      const result = await chrome.runtime.sendMessage({ type: 'DEACTIVATE_LICENSE' });
+      if (result?.success) {
+        setLicense(null);
+        setLicenseSuccess('License deactivated. You are now on the Free plan.');
+      } else {
+        setLicenseError(result?.error || 'Failed to deactivate');
+      }
+    } catch (e) {
+      setLicenseError((e as Error).message);
+    } finally {
+      setLicenseLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {/* ---- Subscription & License ---- */}
+      <div className="border border-tiktok-gray-200 rounded-lg p-3">
+        <h3 className="text-sm font-semibold text-tiktok-gray-700 mb-2">Subscription</h3>
+
+        {license ? (
+          <div className="space-y-2">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-2.5">
+              <p className="text-green-800 text-xs font-semibold">
+                ✅ {license.variantName || license.tier.toUpperCase()} Plan — Active
+              </p>
+              {license.customerEmail && (
+                <p className="text-green-700 text-[10px] mt-0.5">{license.customerEmail}</p>
+              )}
+              {license.expiresAt && (
+                <p className="text-green-600 text-[10px] mt-0.5">
+                  Renews: {new Date(license.expiresAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={handleDeactivateLicense}
+              disabled={licenseLoading}
+              className="text-xs text-red-500 hover:underline"
+            >
+              {licenseLoading ? 'Processing...' : 'Deactivate License'}
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-tiktok-gray-500 bg-tiktok-gray-100 rounded px-2 py-0.5">
+                Free Plan
+              </span>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-tiktok-gray-600 mb-1">
+                License Key
+              </label>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={licenseKeyInput}
+                  onChange={e => setLicenseKeyInput(e.target.value)}
+                  placeholder="Paste your license key here"
+                  className="input-field text-xs flex-1"
+                  onKeyDown={e => e.key === 'Enter' && handleActivateLicense()}
+                />
+                <button
+                  onClick={handleActivateLicense}
+                  disabled={licenseLoading || !licenseKeyInput.trim()}
+                  className="btn-primary text-xs px-3 shrink-0"
+                >
+                  {licenseLoading ? '...' : 'Activate'}
+                </button>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-1">
+              <a
+                href={LS_CONFIG.proCheckoutUrl}
+                target="_blank"
+                rel="noopener"
+                className="text-[11px] text-brand-primary hover:underline font-medium"
+              >
+                Get Pro ($19/mo) →
+              </a>
+              <a
+                href={LS_CONFIG.businessCheckoutUrl}
+                target="_blank"
+                rel="noopener"
+                className="text-[11px] text-brand-primary hover:underline font-medium"
+              >
+                Get Business ($49/mo) →
+              </a>
+            </div>
+          </div>
+        )}
+
+        {licenseError && (
+          <p className="text-red-600 text-[11px] mt-1.5">❌ {licenseError}</p>
+        )}
+        {licenseSuccess && (
+          <p className="text-green-600 text-[11px] mt-1.5">✅ {licenseSuccess}</p>
+        )}
+      </div>
+
+      <hr className="border-tiktok-gray-100" />
+
+      {/* ---- AI Configuration ---- */}
+
       {/* Trial Status (when no key configured) */}
       {!hasApiKey && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-3">

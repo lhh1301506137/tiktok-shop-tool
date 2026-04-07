@@ -1,69 +1,99 @@
-# Chrome Web Store Listing Materials
+# Chrome Web Store Listing — ShopPilot
 
-## Extension Name
-ShopPilot - TikTok Shop Seller Tool
+## Short Description (max 132 chars)
 
-## Short Description (132 chars max)
-AI-powered TikTok Shop assistant: automate creator outreach, generate listings, and monitor competitor prices — all in one tool.
+```
+AI-powered TikTok Shop seller tool — find creators, generate invites & listings, track competitors. 5 free AI calls included.
+```
+
+(130 characters)
 
 ## Detailed Description
 
-ShopPilot supercharges your TikTok Shop selling experience with AI-powered automation tools, right inside your browser.
+```
+ShopPilot — The #1 AI assistant for TikTok Shop sellers
 
-**CREATOR OUTREACH**
-- Automatically capture creator data from TikTok Seller Center
-- Search, sort, and filter creators by followers, GMV, sales, and categories
-- Generate personalized invitation messages with AI (professional, friendly, or casual tone)
-- Batch invite multiple creators with smart rate limiting
-- Export creator lists to CSV for further analysis
+Stop spending hours on creator outreach and listing copy. ShopPilot automates the most time-consuming parts of running a TikTok Shop so you can focus on growing your business.
 
-**AI LISTING GENERATOR**
-- Generate SEO-optimized product titles, descriptions, and bullet points
-- Get relevant search tags to maximize product visibility
-- Support for multiple AI providers: OpenAI, MiniMax, DeepSeek, or any OpenAI-compatible API
+🔍 SMART CREATOR DISCOVERY
+• Automatically capture creator profiles as you browse TikTok Shop's affiliate marketplace
+• Filter by followers (1K to 500K+), GMV, category, and more
+• Sort by performance metrics — GMV, items sold, follower count
+• Save up to 200 creators (Free) or unlimited (Pro)
+• Virtual scrolling for buttery-smooth browsing of large lists
 
-**COMPETITOR MONITORING**
-- Track competitor product prices and sales trends
-- Automatic price drop alerts (>5% decrease) and sales spike notifications (>20% increase)
-- Background monitoring every 6 hours — no manual refresh needed
-- View price history trends at a glance
+✉️ AI-POWERED INVITATIONS
+• Generate personalized creator outreach messages in seconds
+• Choose your tone: Professional, Friendly, or Casual
+• Your product info (name, description, commission) automatically included
+• Save high-converting messages as reusable templates (up to 20)
+• Batch invite multiple creators with smart anti-detection delays
 
-**PRIVACY-FIRST DESIGN**
-- Bring Your Own Key (BYOK): You provide your own AI API keys — we never see them
-- All data stored locally on your device — nothing leaves your browser
-- No accounts, no registration, no server-side storage
-- No analytics or tracking of any kind
+📝 AI LISTING COPY GENERATOR
+• Create optimized product titles, descriptions, bullet points & SEO tags
+• Real-time character counts with TikTok Shop limits
+• Reference competitor listings for smarter copy
+• Per-section copy buttons — grab exactly what you need
 
-**SUPPORTED REGIONS**
-TikTok Seller Center: US, UK, Singapore, Indonesia, Thailand, Malaysia, Vietnam, Philippines
-TikTok Affiliate: Global
+📊 COMPETITOR MONITORING
+• Track competitor products — price changes, sales volume, ratings
+• Automatic alerts for price drops (>5%) and sales spikes (>20%)
+• Background refresh keeps data current
 
-Works as a convenient side panel alongside your TikTok Seller Center workflow.
+📈 PERFORMANCE DASHBOARD
+• Daily stats: invites sent, AI generations, creators saved
+• Weekly trend chart with historical data
+• Usage tracking across all features
+
+🤖 YOUR CHOICE OF AI
+ShopPilot supports 7 major AI providers:
+• OpenAI (GPT-4o) • Claude (Anthropic) • Gemini (Google)
+• DeepSeek • GLM (智谱) • Kimi (月之暗面) • MiniMax
+• Plus any OpenAI-compatible API
+• 5 FREE AI calls included — no setup required!
+
+🔒 PRIVACY FIRST
+• All data stored locally in your browser — nothing sent to our servers
+• Bring Your Own Key (BYOK) — your API keys, your control
+• No tracking, no analytics, no data collection
+• Open source: github.com/lhh1301506137/tiktok-shop-tool
+
+💎 PLANS
+• Free: 200 creators, 5 AI calls/day, 3 tracked products
+• Pro ($19/mo): Unlimited creators, 50 AI calls/day, 20 tracked products
+• Business ($49/mo): Everything in Pro + priority support
+
+GET STARTED IN 60 SECONDS
+1. Install ShopPilot
+2. Go to TikTok Shop's Find Creators page
+3. Scroll to capture creators automatically
+4. Open the side panel and start generating AI invites!
+
+Questions? Feedback? Use the built-in feedback widget or visit shoppilot.pro
+
+Keywords: TikTok Shop, seller tool, creator outreach, affiliate marketing, AI copywriting, product listing, competitor tracking, e-commerce automation
+```
 
 ## Category
-Productivity
+
+Primary: **Productivity**
+Secondary: **Shopping**
 
 ## Language
-English
 
-## Tags / Keywords
-tiktok, tiktok shop, seller tool, creator outreach, affiliate marketing, AI, listing optimization, competitor monitoring, e-commerce
+English (default) — the extension UI is in English
 
-## Promotional Tile Text (for screenshots)
-1. "Capture & manage TikTok creators in one dashboard"
-2. "AI-generated personalized invite messages"
-3. "Smart competitor price & sales monitoring"
-4. "SEO-optimized listing copy in seconds"
-5. "Batch invite creators with smart rate limiting"
+## Promotional Images Needed
 
-## Single Purpose
-Help TikTok Shop sellers manage creator outreach, generate AI-powered product listings, and monitor competitor products.
+| Size | Purpose | Status |
+|:---|:---|:---|
+| 1280×800 | Large promotional tile | ⏳ Needs real screenshots |
+| 440×280 | Small promotional tile | ⏳ Needs real screenshots |
+| 920×680 | Marquee (optional) | ⏳ Needs real screenshots |
 
-## Justification for permissions
-See: docs/chrome_web_store_review_notes.md
+> **Note**: Screenshots should show the extension in action on a real TikTok Shop seller page.
+> The user needs to provide these from their actual TikTok seller account.
 
-## Privacy Policy URL
-(Host docs/privacy-policy.html and paste URL here)
+## Review Notes Reference
 
-## Support Email
-shoppilot.support@gmail.com
+See `docs/chrome_web_store_review_notes.md` for the permission justification document.
